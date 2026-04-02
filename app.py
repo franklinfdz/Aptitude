@@ -366,7 +366,7 @@ all_questions =  [
 
 def get_questions():
     random.shuffle(all_questions)
-    selected = all_questions[:5]
+    selected = all_questions[:10]
 
     for i, q in enumerate(selected):
         q["id"] = i
