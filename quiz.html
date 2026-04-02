@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/script.js" defer></script>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2 id="timer">Time: 60</h2>
+
+<form action="/submit" method="post">
+
+{% for q in questions %}
+<div class="question" data-id="{{ q.id }}">
+  <p><b>{{ loop.index }}. {{ q.q }}</b></p>
+
+  {% set q_index = loop.index0 %}
+
+  {% for opt in q.options %}
+  <label>
+    <input 
+      type="radio" 
+      name="q{{ q_index }}" 
+      value="{{ opt }}" 
+      required
+      onclick="checkAnswer({{ q.id }}, this.value, this)"
+    >
+    {{ opt }}
+  </label><br>
+  {% endfor %}
+
+  <!-- Explanation Box -->
+  <div class="explanation-box" style="display:none;">
+    
+    <div class="level-buttons">
+      <button type="button" onclick="showLevel(this, 'level1')">Level 1</button>
+      <button type="button" onclick="showLevel(this, 'level2')">Level 2</button>
+      <button type="button" onclick="showLevel(this, 'level3')">Level 3</button>
+    </div>
+
+    <div class="explanation-content"></div>
+  </div>
+
+</div>
+{% endfor %}
+
+<div class="center-buttons">
+<button type="submit">SUBMIT</button>
+</div>
+
+</form>
+
+</div>
+
+<!-- BACKGROUND SYSTEM -->
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+
+<div class="cursor-glow"></div>
+<canvas id="particles"></canvas>
+
+</body>
+</html>

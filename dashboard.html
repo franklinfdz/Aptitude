@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📊 Your Dashboard</h1>
+
+<p>Total Attempts: {{ attempts }}</p>
+<p>Average Score: {{ avg_score }}</p>
+
+<canvas id="chart"></canvas>
+
+<br>
+<div class="center-buttons">
+<a href="/"><button>Back To Home</button></a>
+</div>
+</div>
+
+<script>
+const scores = {{ scores | tojson }};
+const totals = {{ totals | tojson }};
+
+const ctx = document.getElementById('chart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: scores.map((_, i) => "Attempt " + (i + 1)),
+        datasets: [{
+            label: 'Scores',
+            data: scores,
+            fill: false,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            tension: 0.3
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                enabled: true
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                suggestedMax: Math.max(...totals)
+            }
+        }
+    }
+});
+</script>
+
+<!-- BACKGROUND SYSTEM -->
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="cursor-glow"></div>
+<canvas id="particles"></canvas>
+</body>
+</html>

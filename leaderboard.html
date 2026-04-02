@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏆 Leaderboard</h1>
+
+<table style="width:100%; text-align:center;">
+<tr>
+<th>Rank</th>
+<th>Name</th>
+<th>Score</th>
+</tr>
+
+{% for row in data %}
+<tr>
+<td>{{ loop.index }}</td>
+<td>{{ row[0] }}</td>
+<td>{{ row[1] }}/{{ row[2] }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+<div class="center-buttons">
+<a href="/"><button>Back</button></a>
+</div>
+</div>
+
+<!-- BACKGROUND SYSTEM -->
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="cursor-glow"></div>
+<canvas id="particles"></canvas>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+<div class="container">
+
+  <!-- RESULT CONTENT -->
+  <div id="resultContent">
+    <h1>🎯 Score: {{ score }}/{{ total }}</h1>
+
+    {% if wrong|length == 0 %}
+      <h2>🔥 Perfect Score! Well Done</h2>
+    {% else %}
+      <h2>📚 Learn From Mistakes</h2>
+
+      {% for w in wrong %}
+      <div class="wrong">
+        <p><b>{{ w.q }}</b></p>
+        <p>Correct: {{ w.correct }}</p>
+
+        <!-- Explanation Container -->
+        <div id="exp{{ loop.index }}"></div>
+
+        <script>
+          showExplanation(
+            1,
+            "exp{{ loop.index }}",
+            {{ w.exp | tojson }}
+          );
+        </script>
+
+      </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- TRY AGAIN -->
+  <div class="center-buttons">
+    <form action="/">
+      <button>Try Again</button>
+    </form>
+  </div>
+
+</div>
+
+<!-- BACKGROUND -->
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+
+<!-- 🔥 Explanation Logic -->
+<script>
+function showExplanation(level, id, explanations) {
+    const el = document.getElementById(id);
+
+    if (level === 1) {
+        el.innerHTML = `
+            <b>🧠 Level 1:</b> ${explanations.level1}
+            <br><br>
+            <button onclick='showExplanation(2, "${id}", ${JSON.stringify(explanations)})'>
+                Explain More 🔍
+            </button>
+        `;
+    }
+
+    else if (level === 2) {
+        el.innerHTML = `
+            <b>🧠 Level 2:</b> ${explanations.level2}
+            <br><br>
+            <button onclick='showExplanation(3, "${id}", ${JSON.stringify(explanations)})'>
+                Explain Like Beginner 👶
+            </button>
+        `;
+    }
+
+    else if (level === 3) {
+        el.innerHTML = `
+            <b>🧠 Level 3:</b> ${explanations.level3}
+        `;
+    }
+}
+</script>
+
+</body>
+</html>
