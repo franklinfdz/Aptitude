@@ -61,14 +61,19 @@ def solve_logic(question, answer):
     if len(nums) >= 3:
         diff = nums[1] - nums[0]
 
+        # Arithmetic Pattern
         if all(nums[i+1] - nums[i] == diff for i in range(len(nums)-1)):
             steps.append(f"Pattern: +{diff}")
             steps.append(f"Next = {nums[-1]} + {diff}")
 
-        elif nums[1] != 0 and nums[2] // nums[1] == nums[1] // nums[0]:
-            ratio = nums[1] // nums[0]
-            steps.append(f"Pattern: ×{ratio}")
-            steps.append(f"Next = {nums[-1]} × {ratio}")
+        # Geometric Pattern (FIXED)
+        elif nums[1] != 0 and nums[0] != 0:
+            ratio1 = nums[1] / nums[0]
+            ratio2 = nums[2] / nums[1]
+
+            if ratio1 == ratio2:
+                steps.append(f"Pattern: ×{ratio1}")
+                steps.append(f"Next = {nums[-1]} × {ratio1}")
 
         else:
             steps.append("Complex Pattern")
