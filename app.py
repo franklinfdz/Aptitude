@@ -24,27 +24,44 @@ def generate_explanations(question, answer, qtype):
 
 def build_levels(steps, answer):
 
-    # 🔹 LEVEL 1 (QUICK HIT)
+    # 🔹 LEVEL 1 (QUICK)
     level1 = f"👉 Idea: {steps[0]}\n✅ Answer: {answer}"
 
-    # 🔹 LEVEL 2 (TEEN / CLEAR LOGIC)
-    level2 = "\n\n".join([
-        "🧠 Step-By-Step Solution:",
-        *[f"➡ Step {i+1}: {s}" for i, s in enumerate(steps)],
-        f"\n🎯 Final Answer: {answer}"
-    ])
+    # 🔹 LEVEL 2 (HOW → STEP BY STEP)
+    level2_lines = ["🧠 How To Solve:"]
 
-    # 🔹 LEVEL 3 (KID / SUPER SIMPLE STORY)
-    simple_lines = []
+    for i, s in enumerate(steps):
+        level2_lines.append(f"Step {i+1}: {s}")
+
+    level2_lines.append(f"\n🎯 Final Answer: {answer}")
+    level2 = "\n\n".join(level2_lines)
+
+    # 🔹 LEVEL 3 (WHY → SIMPLE UNDERSTANDING)
+    level3_lines = [" Why This Works (Super Simple):"]
 
     for s in steps:
-        simple_lines.append(f"👉 {s}.")
+        # Convert technical step → simple idea
+        simple = s.lower()
 
-    level3 = "\n\n".join([
-        "👶 Let’s Understand Like A Story:",
-        *simple_lines,
-        f"\n🎉 So The Answer Is: {answer}"
-    ])
+        if "multiply" in simple:
+            level3_lines.append("👉 We Are Just Adding The Same Number Again And Again.")
+        elif "divide" in simple:
+            level3_lines.append("👉 We Are Splitting Into Equal Parts.")
+        elif "percentage" in simple or "%" in simple:
+            level3_lines.append("👉 Percentage Means Parts Out Of 100.")
+        elif "add" in simple:
+            level3_lines.append("👉 We Are Combining Numbers Together.")
+        elif "subtract" in simple:
+            level3_lines.append("👉 We Are Taking Away From A Bigger Number.")
+        elif "square" in simple:
+            level3_lines.append("👉 Square Means Same Number Times Same Number.")
+        elif "pattern" in simple:
+            level3_lines.append("👉 Numbers Follow A Rule That Repeats.")
+        else:
+            level3_lines.append("👉 We Just Follow The Pattern Or Rule Step By Step.")
+
+    level3_lines.append(f"\n🎉 So The Answer Is: {answer}")
+    level3 = "\n\n".join(level3_lines)
 
     return {
         "level1": level1,
