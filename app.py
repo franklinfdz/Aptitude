@@ -12,16 +12,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
 
 # =========================================================
-# ⚡ XP SYSTEM
-# =========================================================
-XP_MAP = {
-    "easy": 1,
-    "medium": 2,
-    "hard": 3
-}
-
-# =========================================================
-# 🧠 EXPLANATION ENGINE (UNCHANGED CORE)
+# 🧠 EXPLANATION ENGINE
 # =========================================================
 def generate_explanations(question, answer, qtype):
     try:
@@ -56,48 +47,37 @@ def generate_explanations(question, answer, qtype):
 # 🧩 LEVEL BUILDER
 # =========================================================
 def build_levels(steps, answer, question=""):
-    level1 = f"Idea: {steps[0]}\nFinal Answer: {answer}"
-
-    level2_lines = ["Step-By-Step Solution:"]
-    for i, s in enumerate(steps):
-        level2_lines.append(f"{i+1}. {s}")
-    level2_lines.append(f"\nConclusion: {answer}")
-
-    level3 = "Concept:\n\n" + "\n".join(steps)
-
     return {
-        "level1": level1,
-        "level2": "\n\n".join(level2_lines),
-        "level3": level3
+        "level1": f"Idea: {steps[0]}\nFinal Answer: {answer}",
+        "level2": "\n\n".join(
+            ["Step-By-Step Solution:"]
+            + [f"{i+1}. {s}" for i, s in enumerate(steps)]
+            + [f"\nConclusion: {answer}"]
+        ),
+        "level3": "Concept:\n\n" + "\n".join(steps)
     }
 
 # =========================================================
-# 🔢 QUANT / LOGIC / VERBAL (SAFE VERSION)
+# 🔢 SOLVERS
 # =========================================================
 def solve_quant(question, answer):
     steps = []
-    numbers = list(map(float, re.findall(r'\d+\.?\d*', question)))
 
     if "%" in question:
         steps.append("Convert Percentage And Multiply")
-
     elif "+" in question:
         steps.append("Perform Addition")
-
     elif "-" in question:
         steps.append("Perform Subtraction")
-
     elif "×" in question or "x" in question.lower():
         steps.append("Perform Multiplication")
-
     elif "÷" in question or "divided" in question.lower():
         steps.append("Perform Division")
-
     else:
         steps.append("Break Down Problem Logically")
 
     steps.append(f"Final Result = {answer}")
-    return build_levels(steps, answer, question)
+    return build_levels(steps, answer)
 
 def solve_logic(question, answer):
     steps = []
@@ -108,53 +88,29 @@ def solve_logic(question, answer):
 
         if all(nums[i+1] - nums[i] == diff for i in range(len(nums)-1)):
             steps.append(f"Constant Difference (+{diff})")
-
-        elif all(nums[i] != 0 and nums[i+1] % nums[i] == 0 for i in range(len(nums)-1)):
-            ratio = nums[1] / nums[0]
-            steps.append(f"Multiplicative Pattern (×{ratio})")
-
         else:
             steps.append("Pattern Analysis Required")
-
     else:
         steps.append("Logical Pattern Identification")
 
     steps.append(f"Correct Answer: {answer}")
-    return build_levels(steps, answer, question)
+    return build_levels(steps, answer)
 
 def solve_verbal(question, answer):
-    steps = ["Apply Grammar Or Meaning Logic", f"Final Answer: {answer}"]
-    return build_levels(steps, answer, question)
+    return build_levels(["Apply Grammar Or Meaning Logic", f"Final Answer: {answer}"], answer)
 
 def default_explanation(question, answer):
-    return build_levels(["Understand And Solve Step By Step"], answer, question)
+    return build_levels(["Understand And Solve Step By Step"], answer)
 
 # =========================================================
-# 📊 QUESTIONS (KEEP YOUR FULL DATA)
+# 📊 QUESTIONS
 # =========================================================
 all_questions = [
-    # KEEP YOUR FULL QUESTION LIST HERE (UNCHANGED)
+    # YOUR DATA HERE
 ]
 
-
-def get_user_level(xp):
-    if xp < 50:
-        return "easy"
-    elif xp < 150:
-        return "medium"
-    else:
-        return "hard"
-
-
 def get_xp(difficulty):
-    if difficulty == "easy":
-        return 5
-    elif difficulty == "medium":
-        return 10
-    elif difficulty == "hard":
-        return 20
-    return 5
-
+    return {"easy": 5, "medium": 10, "hard": 20}.get(difficulty, 5)
 
 def get_questions(user_xp):
     if user_xp < 100:
@@ -165,22 +121,26 @@ def get_questions(user_xp):
         level = "hard"
 
     filtered = [q for q in all_questions if q["difficulty"] == level]
-
     random.shuffle(filtered)
-    selected = filtered[:10]  # 🔥 NOW 10 QUESTIONS
 
+    selected = filtered[:10]
+
+    selected_with_ids = []
     for i, q in enumerate(selected):
-        q["id"] = i
+        q_copy = q.copy()
+        q_copy["id"] = i
+        selected_with_ids.append(q_copy)
 
-    return selected
-    
-        
+    return selected_with_ids
 
 # =========================================================
 # 🗄️ DATABASE
 # =========================================================
 def get_db_connection():
     db_url = os.environ.get("DATABASE_URL")
+
+    if not db_url:
+        raise Exception("DATABASE_URL Not Set")
 
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
@@ -198,7 +158,7 @@ def init_db():
             password TEXT,
             total_score INTEGER DEFAULT 0,
             total_attempts INTEGER DEFAULT 0,
-            total_xp INTEGER DEFAULT 0
+            xp INTEGER DEFAULT 0
         )
     """)
 
@@ -209,19 +169,14 @@ def init_db():
 init_db()
 
 # =========================================================
-# 🏆 RANK SYSTEM (XP BASED)
+# 🏆 RANK SYSTEM
 # =========================================================
 def get_rank(xp):
-    if xp >= 1000:
-        return "Elite"
-    elif xp >= 600:
-        return "Expert"
-    elif xp >= 300:
-        return "Advanced"
-    elif xp >= 100:
-        return "Intermediate"
-    else:
-        return "Beginner"
+    if xp >= 1000: return "Elite"
+    elif xp >= 600: return "Expert"
+    elif xp >= 300: return "Advanced"
+    elif xp >= 100: return "Intermediate"
+    else: return "Beginner"
 
 # =========================================================
 # 🌐 ROUTES
@@ -246,22 +201,40 @@ def login():
                 return render_template("login.html", error="Invalid Credentials")
         else:
             hashed_pw = generate_password_hash(password)
-            cur.execute(
-                "INSERT INTO users (username, password) VALUES (%s, %s)",
-                (username, hashed_pw)
-            )
+            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_pw))
             conn.commit()
-
             session['username'] = username
             return redirect('/dashboard')
 
     return render_template("login.html")
 
+@app.route('/quiz', methods=['POST'])
+def quiz():
+    username = session.get('username')
+    if not username:
+        return redirect('/')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT xp FROM users WHERE username=%s", (username,))
+    row = cur.fetchone()
+    xp = row[0] if row else 0
+
+    cur.close()
+    conn.close()
+
+    questions = get_questions(xp)
+    session['questions'] = questions
+
+    return render_template("quiz.html", questions=questions)
 
 @app.route('/submit', methods=['POST'])
 def submit():
     questions = session.get('questions', [])
     username = session.get('username')
+
+    if not username:
+        return redirect('/')
 
     score = 0
     xp_earned = 0
@@ -274,19 +247,18 @@ def submit():
             score += 1
             xp_earned += get_xp(q["difficulty"])
         else:
-            explanation = generate_explanations(q["q"], q["answer"], q["type"])
             wrong.append({
                 "q": q["q"],
                 "correct": q["answer"],
-                "exp": explanation
+                "exp": generate_explanations(q["q"], q["answer"], q["type"])
             })
 
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # 🔥 Get OLD XP
     cur.execute("SELECT xp FROM users WHERE username=%s", (username,))
-    old_xp = cur.fetchone()[0]
+    row = cur.fetchone()
+    old_xp = row[0] if row else 0
 
     new_xp = old_xp + xp_earned
 
@@ -302,12 +274,6 @@ def submit():
     cur.close()
     conn.close()
 
-    # 🔥 Rank Change Detection
-    old_rank = get_rank(old_xp)
-    new_rank = get_rank(new_xp)
-
-    rank_up = old_rank != new_rank
-
     return render_template(
         "result.html",
         score=score,
@@ -315,103 +281,27 @@ def submit():
         wrong=wrong,
         xp_earned=xp_earned,
         new_xp=new_xp,
-        rank=get_rank(new_xp),
-        rank_up=rank_up
-    )
-
-
-@app.route('/answer', methods=['POST'])
-def answer():
-    data = request.json
-    qid = data.get("id")
-    user_answer = data.get("answer")
-
-    questions = session.get('questions', [])
-    q = next((q for q in questions if q.get("id") == qid), None)
-
-    if not q:
-        return jsonify({"error": "Question Not Found"}), 400
-
-    correct = q["answer"] == user_answer
-
-    return jsonify({
-        "correct": correct,
-        "correct_answer": q["answer"],
-        "type": q["type"]
-    })
-
-@app.route('/submit', methods=['POST'])
-def submit():
-    questions = session.get('questions', [])
-    username = session.get('username')
-
-    if not questions or not username:
-        return redirect('/')
-
-    score = 0
-    xp_earned = 0
-
-    for i, q in enumerate(questions):
-        ans = request.form.get(f"q{i}")
-        if ans == q["answer"]:
-            score += 1
-            xp_earned += XP_MAP.get(q["difficulty"], 1)
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("""
-        UPDATE users
-        SET total_score = total_score + %s,
-            total_attempts = total_attempts + %s,
-            total_xp = total_xp + %s
-        WHERE username = %s
-    """, (score, len(questions), xp_earned, username))
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return render_template(
-        "result.html",
-        score=score,
-        total=len(questions),
-        xp=xp_earned
+        rank=get_rank(new_xp)
     )
 
 @app.route('/dashboard')
 def dashboard():
     username = session.get('username')
-
     if not username:
         return redirect('/')
 
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT total_score, total_attempts, xp
-        FROM users
-        WHERE username = %s
-    """, (username,))
-
-    user = cur.fetchone()
+    cur.execute("SELECT total_score, total_attempts, xp FROM users WHERE username=%s", (username,))
+    row = cur.fetchone()
 
     cur.close()
     conn.close()
 
-    score, attempts, xp = user
+    score, attempts, xp = row if row else (0, 0, 0)
 
     accuracy = round((score / attempts) * 100, 2) if attempts else 0
-    rank = get_rank(xp)
-
-    # 🔥 Difficulty Insight
-    if xp < 100:
-        difficulty = "Easy"
-    elif xp < 300:
-        difficulty = "Medium"
-    else:
-        difficulty = "Hard"
 
     return render_template(
         "dashboard.html",
@@ -419,9 +309,8 @@ def dashboard():
         score=score,
         attempts=attempts,
         accuracy=accuracy,
-        rank=rank,
-        xp=xp,
-        difficulty=difficulty
+        rank=get_rank(xp),
+        xp=xp
     )
 
 @app.route('/leaderboard')
@@ -429,19 +318,10 @@ def leaderboard():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT username, xp, total_attempts
-        FROM users
-        ORDER BY xp DESC
-        LIMIT 10
-    """)
-
+    cur.execute("SELECT username, xp, total_attempts FROM users ORDER BY xp DESC LIMIT 10")
     data = cur.fetchall()
 
-    leaderboard_data = []
-    for user in data:
-        rank = get_rank(user[1])
-        leaderboard_data.append((user[0], user[1], user[2], rank))
+    leaderboard_data = [(u[0], u[1], u[2], get_rank(u[1])) for u in data]
 
     cur.close()
     conn.close()
@@ -457,5 +337,4 @@ def logout():
 # ▶ RUN
 # =========================================================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
