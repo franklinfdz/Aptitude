@@ -3,23 +3,87 @@
 <head>
 <link rel="stylesheet" href="/static/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  .stats-grid {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .stat-card {
+    background: rgba(255,255,255,0.05);
+    padding: 15px 25px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 15px rgba(0,255,255,0.2);
+    transition: 0.3s;
+    min-width: 150px;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 25px rgba(0,255,255,0.4);
+  }
+
+  .stat-title {
+    font-size: 0.9rem;
+    opacity: 0.7;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+
+  canvas {
+    margin-top: 30px;
+  }
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-<h1>📊 Your Dashboard</h1>
+<h1>Performance Dashboard</h1>
 
-<p>Total Attempts: {{ attempts }}</p>
-<p>Average Score: {{ avg_score }}</p>
+<!-- 🔥 STATS SECTION -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-title">Total Attempts</div>
+    <div class="stat-value">{{ attempts }}</div>
+  </div>
 
+  <div class="stat-card">
+    <div class="stat-title">Average Score</div>
+    <div class="stat-value">{{ avg_score }}</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-title">XP Earned</div>
+    <div class="stat-value">{{ xp }}</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-title">Rank</div>
+    <div class="stat-value">{{ rank }}</div>
+  </div>
+</div>
+
+<!-- 📈 CHART -->
 <canvas id="chart"></canvas>
 
 <br>
+
 <div class="center-buttons">
-<a href="/"><button>Back To Home</button></a>
+<a href="/"><button>Return To Home</button></a>
+<a href="/quiz"><button>Start New Test</button></a>
 </div>
+
 </div>
 
 <script>
@@ -33,26 +97,32 @@ new Chart(ctx, {
     data: {
         labels: scores.map((_, i) => "Attempt " + (i + 1)),
         datasets: [{
-            label: 'Scores',
+            label: 'Score Progression',
             data: scores,
-            fill: false,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            tension: 0.3
+            fill: true,
+            borderColor: 'rgba(0, 255, 255, 1)',
+            backgroundColor: 'rgba(0, 255, 255, 0.1)',
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6
         }]
     },
     options: {
         responsive: true,
         plugins: {
             legend: {
-                position: 'top',
-            },
-            tooltip: {
-                enabled: true
+                labels: {
+                    color: "#fff"
+                }
             }
         },
         scales: {
+            x: {
+                ticks: { color: "#aaa" }
+            },
             y: {
                 beginAtZero: true,
+                ticks: { color: "#aaa" },
                 suggestedMax: Math.max(...totals)
             }
         }
@@ -65,5 +135,58 @@ new Chart(ctx, {
 <div class="bg-shape shape2"></div>
 <div class="cursor-glow"></div>
 <canvas id="particles"></canvas>
+
+<script>
+/* Cursor Glow */
+document.addEventListener("mousemove", (e) => {
+  const glow = document.querySelector(".cursor-glow");
+  glow.style.left = e.clientX + "px";
+  glow.style.top = e.clientY + "px";
+});
+
+/* Particles */
+const canvas = document.getElementById("particles");
+const ctx2 = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let particles = [];
+for (let i = 0; i < 80; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 3 + 1,
+    dx: (Math.random() - 0.5) * 0.5,
+    dy: (Math.random() - 0.5) * 0.5
+  });
+}
+
+function animate() {
+  ctx2.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.x += p.dx; p.y += p.dy;
+
+    if (p.x > canvas.width) p.x = 0;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.y > canvas.height) p.y = 0;
+    if (p.y < 0) p.y = canvas.height;
+
+    ctx2.beginPath();
+    ctx2.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx2.fillStyle = "rgba(0,255,255,0.5)";
+    ctx2.fill();
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+
 </body>
 </html>
