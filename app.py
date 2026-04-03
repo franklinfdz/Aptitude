@@ -1,10 +1,11 @@
 import os
-import re
 import random
+import re
+import psycopg2
 from flask import Flask, render_template, request, session, jsonify
 
 # =========================================================
-# 🚀 FLASK APP SETUP
+# 🚀 FLASK APP
 # =========================================================
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
@@ -59,27 +60,35 @@ def solve_logic(question, answer):
 
     if len(nums) >= 3:
         diff = nums[1] - nums[0]
+
         if all(nums[i+1] - nums[i] == diff for i in range(len(nums)-1)):
             steps.append(f"Pattern: +{diff}")
             steps.append(f"Next = {nums[-1]} + {diff}")
+
         elif nums[1] != 0 and nums[2] // nums[1] == nums[1] // nums[0]:
             ratio = nums[1] // nums[0]
             steps.append(f"Pattern: ×{ratio}")
             steps.append(f"Next = {nums[-1]} × {ratio}")
+
         else:
             steps.append("Complex Pattern")
+
     steps.append(f"Answer = {answer}")
     return build_levels(steps, answer)
 
 def solve_verbal(question, answer):
     steps = []
+
     if "___" in question:
         steps.append("Check Subject")
         steps.append("Match Verb")
+
     elif "synonym" in question.lower():
         steps.append("Find Similar Meaning")
+
     elif "antonym" in question.lower():
         steps.append("Find Opposite Meaning")
+
     steps.append(f"Answer = {answer}")
     return build_levels(steps, answer)
 
@@ -98,38 +107,227 @@ def default_explanation(question, answer):
     }
 
 # =========================================================
-# 📊 QUESTIONS DATABASE (SAMPLE)
+# 📊 QUESTIONS
 # =========================================================
 all_questions = [
-    {"q":"What is 10% of ₹200?","options":["10","20","30","40"],"answer":"20","type":"quant","difficulty":"easy"},
-    {"q":"Find the next number in the series: 2, 4, 6, 8, ?","options":["9","10","11","12"],"answer":"10","type":"logic","difficulty":"easy"},
-    {"q":"Choose the correct word: He ___ playing.","options":["is","are","am","be"],"answer":"is","type":"verbal","difficulty":"easy"},
-    {"q":"A value increases from 100 to 200. What is the increase?","options":["50","100","150","200"],"answer":"100","type":"di","difficulty":"easy"},
+    {
+        "q": "What Is The Main Cause Of SDK Usage Error?",
+        "options": ["Incorrect API Key", "Network Issue", "Unsupported Version"],
+        "answer": "Incorrect API Key",
+        "type": "logic",
+        "difficulty": "easy"
+    },
+    {
+        "q": "How Can You Verify API Key Validity?",
+        "options": ["Use SDK Test Method", "Guess Randomly", "Ignore It"],
+        "answer": "Use SDK Test Method",
+        "type": "logic",
+        "difficulty": "easy"
+    },
+    {
+        "q": "What Should You Do If SDK Version Is Unsupported?",
+        "options": ["Update SDK", "Downgrade App", "Ignore Warning"],
+        "answer": "Update SDK",
+        "type": "logic",
+        "difficulty": "medium"
+    },
+    {
+        "q": "How Can Network Issues Affect SDK Usage?",
+        "options": ["Timeout Errors", "Incorrect Results", "App Crash"],
+        "answer": "Timeout Errors",
+        "type": "logic",
+        "difficulty": "medium"
+    },
+    {
+        "q": "What Is The Recommended Way To Handle SDK Authentication?",
+        "options": ["Hardcode Keys", "Use Environment Variables", "Ignore Auth"],
+        "answer": "Use Environment Variables",
+        "type": "logic",
+        "difficulty": "hard"
+    }
 ]
 
+def get_questions():
+    random.shuffle(all_questions)
+    selected = all_questions[:5]
+
+    for i, q in enumerate(selected):
+        q["id"] = i
+
+    return selected
+
 # =========================================================
-# 🔗 ROUTES
+# 🗄️ DATABASE
 # =========================================================
-@app.route("/")
+def get_db_connection():
+    db_url = os.environ.get("DATABASE_URL")
+
+    if not db_url:
+        raise Exception("DATABASE_URL Not Set")
+
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+    return psycopg2.connect(db_url, sslmode='require')
+
+def init_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS results (
+            id SERIAL PRIMARY KEY,
+            username TEXT,
+            score INTEGER,
+            total INTEGER,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+try:
+    init_db()
+except Exception as e:
+    print("DB ERROR:", e)
+
+# =========================================================
+# 🌐 ROUTES
+# =========================================================
+@app.route('/')
 def home():
-    return render_template("index.html", questions=all_questions)
+    return render_template("home.html")
 
-@app.route("/explanation", methods=["POST"])
-def explanation():
+@app.route('/quiz', methods=['POST'])
+def quiz():
+    session['username'] = request.form.get('username', 'Guest')
+    questions = get_questions()
+    session['questions'] = questions
+    return render_template("quiz.html", questions=questions)
+
+# 🔥 FIXED ANSWER ROUTE
+@app.route('/answer', methods=['POST'])
+def answer():
     data = request.json
-    question = data.get("question")
-    answer = data.get("answer")
-    qtype = data.get("type")
-    explanation = generate_explanations(question, answer, qtype)
-    return jsonify(explanation)
+    qid = data.get("id")
+    user_answer = data.get("answer")
 
-@app.route("/random-question")
-def random_question():
-    question = random.choice(all_questions)
-    return jsonify(question)
+    questions = session.get('questions', [])
+    q = next((q for q in questions if q.get("id") == qid), None)
+
+    if not q:
+        return jsonify({"error": "Question Not Found"}), 400
+
+    correct = q["answer"] == user_answer
+
+    return jsonify({
+        "correct": correct,
+        "correct_answer": q["answer"],
+        "type": q["type"]
+    })
+
+# 🔥 NEW ROUTE FOR "EXPLAIN AGAIN"
+@app.route('/explain', methods=['POST'])
+def explain():
+    data = request.json
+    qid = data.get("id")
+    level = data.get("level", "level1")
+
+    questions = session.get('questions', [])
+    q = next((q for q in questions if q.get("id") == qid), None)
+
+    if not q:
+        return jsonify({"error": "Question Not Found"}), 400
+
+    explanation = generate_explanations(q["q"], q["answer"], q["type"])
+
+    return jsonify({
+        "explanation": explanation.get(level, explanation["level1"])
+    })
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    questions = session.get('questions', [])
+    username = session.get('username', 'Guest')
+
+    score = 0
+    wrong = []
+
+    for i, q in enumerate(questions):
+        ans = request.form.get(f"q{i}")
+
+        if ans == q["answer"]:
+            score += 1
+        else:
+            wrong.append({
+                "q": q["q"],
+                "correct": q["answer"],
+                "exp": generate_explanations(q["q"], q["answer"], q["type"])
+            })
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO results (username, score, total) VALUES (%s, %s, %s)",
+        (username, score, len(questions))
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return render_template("result.html", score=score, total=len(questions), wrong=wrong)
+
+@app.route('/dashboard')
+def dashboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT score, total FROM results ORDER BY id ASC")
+    data = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    scores = [d[0] for d in data]
+    totals = [d[1] for d in data]
+
+    attempts = len(scores)
+    avg_score = round(sum(scores)/attempts, 2) if attempts else 0
+
+    return render_template(
+        "dashboard.html",
+        scores=scores,
+        totals=totals,
+        attempts=attempts,
+        avg_score=avg_score
+    )
+
+@app.route('/leaderboard')
+def leaderboard():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT username, score, total
+        FROM results
+        ORDER BY score DESC, timestamp ASC
+        LIMIT 10
+    """)
+
+    data = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("leaderboard.html", data=data)
 
 # =========================================================
-# 🚀 APP ENTRY
+# ▶ RUN
 # =========================================================
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
