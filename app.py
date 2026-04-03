@@ -162,11 +162,31 @@ def init_db():
         )
     """)
 
+    # ✅ THIS LINE FIXES YOUR ERROR
+    cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0")
+
     conn.commit()
     cur.close()
     conn.close()
 
 init_db()
+
+# =========================================================
+# 🔧 AUTO FIX MISSING COLUMNS
+# =========================================================
+def fix_missing_columns():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    # Add 'xp' column if it does not exist
+    cur.execute("""
+        ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS xp INTEGER DEFAULT 0
+    """)
+    conn.commit()
+    cur.close()
+    conn.close()
+
+fix_missing_columns()
 
 # =========================================================
 # 🏆 RANK SYSTEM
@@ -218,7 +238,7 @@ def quiz():
     cur = conn.cursor()
     cur.execute("SELECT xp FROM users WHERE username=%s", (username,))
     row = cur.fetchone()
-    xp = row[0] if row else 0
+    xp = row[0] if row and row[0] is not None else 0
 
     cur.close()
     conn.close()
@@ -256,11 +276,13 @@ def submit():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT xp FROM users WHERE username=%s", (username,))
-    row = cur.fetchone()
-    old_xp = row[0] if row else 0
-
-    new_xp = old_xp + xp_earned
+    cur.execute("""
+    UPDATE users
+    SET total_score = total_score + %s,
+        total_attempts = total_attempts + %s,
+        xp = xp + %s
+    WHERE username = %s
+""", (score, len(questions), xp_earned, username))
 
     cur.execute("""
         UPDATE users
