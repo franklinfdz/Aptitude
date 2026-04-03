@@ -22,144 +22,159 @@ def generate_explanations(question, answer, qtype):
         return solve_verbal(question, answer)
     return default_explanation(question, answer)
 
+
+def build_levels(steps, answer):
+    # LEVEL 1 → QUICK
+    level1 = f"👉 Key Idea: {steps[0]} → Answer = {answer}"
+
+    # LEVEL 2 → TEEN STYLE
+    level2 = "\n".join([
+        "🧠 Step-By-Step Thinking:",
+        *[f"Step {i+1}: {s}" for i, s in enumerate(steps)],
+        f"✅ Final Answer: {answer}"
+    ])
+
+    # LEVEL 3 → KID STYLE
+    level3 = "\n".join([
+        "👶 Let’s Think Super Simple:",
+        *[f"👉 {s}" for s in steps],
+        f"🎯 So The Answer Is: {answer}"
+    ])
+
+    return {
+        "level1": level1,
+        "level2": level2,
+        "level3": level3
+    }
+
+
+# =========================
+# 🔢 QUANT
+# =========================
 def solve_quant(question, answer):
     steps = []
     numbers = list(map(int, re.findall(r'\d+', question)))
 
-    # Percentage
-    if "%" in question and "of" in question:
-        percent, total = numbers[0], numbers[1]
-        result = (percent/100) * total
-        steps.append(f"{percent}% Means {percent}/100")
-        steps.append(f"Multiply {percent}/100 × {total}")
-        steps.append(f"Result = {result}")
+    if "%" in question:
+        if "of" in question:
+            percent, total = numbers[0], numbers[1]
+            steps.append(f"{percent}% Means {percent}/100")
+            steps.append(f"Multiply With {total}")
+        elif "increase" in question.lower():
+            steps.append("Find Increase Then Convert To %")
+        elif "profit" in question.lower() or "loss" in question.lower():
+            steps.append("Use Profit/Loss % Formula")
 
-    # Addition
     elif "+" in question:
-        steps.append(f"Numbers Found: {numbers}")
-        result = sum(numbers)
-        steps.append(f"Add Them → {result}")
+        steps.append(f"Add Numbers {numbers}")
 
-    # Multiplication
+    elif "-" in question:
+        steps.append(f"Subtract Numbers {numbers}")
+
     elif "×" in question or "x" in question.lower():
-        result = numbers[0] * numbers[1]
-        steps.append(f"Multiply {numbers[0]} × {numbers[1]} = {result}")
+        steps.append(f"Multiply {numbers[0]} And {numbers[1]}")
 
-    # Division
     elif "÷" in question or "divided" in question.lower():
-        result = numbers[0] / numbers[1]
-        steps.append(f"Divide {numbers[0]} ÷ {numbers[1]} = {result}")
+        steps.append(f"Divide {numbers[0]} By {numbers[1]}")
 
-    # Square
     elif "square" in question.lower():
-        n = numbers[0]
-        result = n*n
-        steps.append(f"Square Means Multiply Same Number")
-        steps.append(f"{n} × {n} = {result}")
+        steps.append("Multiply Number By Itself")
 
-    # Average
+    elif "cube" in question.lower():
+        steps.append("Multiply Number 3 Times")
+
     elif "average" in question.lower():
-        total = sum(numbers)
-        count = len(numbers)
-        result = total / count
-        steps.append(f"Sum = {total}")
-        steps.append(f"Divide By Count ({count})")
-        steps.append(f"Average = {result}")
+        steps.append("Add All Numbers And Divide By Count")
 
-    # Ratio
     elif "ratio" in question.lower():
-        steps.append("Use Ratio Concept")
-        steps.append(f"Answer = {answer}")
+        steps.append("Use Ratio Distribution Logic")
 
-    # Default
     else:
-        steps.append("Break The Problem Into Steps")
-        steps.append(f"Answer = {answer}")
+        steps.append("Break Problem Into Small Steps")
 
-    return build_levels(steps, answer)   
-        
+    steps.append(f"Answer Comes Out As {answer}")
+    return build_levels(steps, answer)
+
+
+# =========================
+# 🧩 LOGIC
+# =========================
 def solve_logic(question, answer):
     steps = []
     nums = list(map(int, re.findall(r'\d+', question)))
 
     if len(nums) >= 3:
-
-        # Arithmetic Pattern
         diff = nums[1] - nums[0]
-        if all(nums[i+1] - nums[i] == diff for i in range(len(nums)-1)):
-            steps.append(f"Pattern: +{diff}")
-            steps.append(f"Next = {nums[-1]} + {diff}")
 
-        # Geometric Pattern
+        if all(nums[i+1] - nums[i] == diff for i in range(len(nums)-1)):
+            steps.append(f"Pattern Is +{diff}")
+
         elif nums[0] != 0 and nums[1] % nums[0] == 0:
             ratio = nums[1] // nums[0]
             if all(nums[i+1] // nums[i] == ratio for i in range(len(nums)-1)):
-                steps.append(f"Pattern: ×{ratio}")
-                steps.append(f"Next = {nums[-1]} × {ratio}")
+                steps.append(f"Pattern Is ×{ratio}")
 
-        # Square Pattern
         elif all(int(n**0.5)**2 == n for n in nums):
-            steps.append("Pattern: Square Numbers")
-            next_n = int((len(nums)+1)**2)
-            steps.append(f"Next = {next_n}")
+            steps.append("These Are Square Numbers")
 
-        # Difference Of Differences
         else:
-            diffs = [nums[i+1] - nums[i] for i in range(len(nums)-1)]
-            steps.append(f"Differences: {diffs}")
-            steps.append("Pattern Might Be Increasing Differences")
+            steps.append("Pattern Changes Gradually (Check Differences)")
+
+    elif "odd" in question.lower() or "different" in question.lower():
+        steps.append("Find Item That Doesn’t Match Group")
 
     else:
-        steps.append("Identify Pattern Carefully")
+        steps.append("Look Carefully For Pattern")
 
-    steps.append(f"Final Answer = {answer}")
-    return build_levels(steps, answer)      
+    steps.append(f"Correct Answer Is {answer}")
+    return build_levels(steps, answer)
 
+
+# =========================
+# 📚 VERBAL (FIXED PROPERLY)
+# =========================
 def solve_verbal(question, answer):
     steps = []
+    q = question.lower()
 
-    # Fill In The Blanks
+    # Grammar Fill
     if "___" in question:
-        if "he" in question.lower() or "she" in question.lower():
-            steps.append("Singular Subject → Use 'is'")
-        elif "they" in question.lower():
-            steps.append("Plural Subject → Use 'are'")
-        steps.append("Apply Grammar Rule")
+        if "he" in q or "she" in q:
+            steps.append("He/She Is Singular → Use 'Is'")
+        elif "i" in q:
+            steps.append("I Always Uses 'Am'")
+        elif "they" in q or "we" in q:
+            steps.append("They/We Are Plural → Use 'Are'")
+        steps.append("Apply Correct Grammar Rule")
 
     # Synonym
-    elif "synonym" in question.lower():
+    elif "synonym" in q:
         steps.append("Find Word With Same Meaning")
-        steps.append(f"{answer} Matches Meaning Closely")
+        steps.append(f"{answer} Matches Closely")
 
     # Antonym
-    elif "antonym" in question.lower():
+    elif "antonym" in q:
         steps.append("Find Opposite Meaning")
-        steps.append(f"{answer} Is Opposite Word")
+        steps.append(f"{answer} Is Opposite")
 
     # Spelling
-    elif "spelling" in question.lower():
+    elif "spelling" in q:
         steps.append("Check Correct Letter Order")
-        steps.append(f"{answer} Is Correctly Spelled")
+        steps.append(f"{answer} Is Correct Form")
 
-    # Default Grammar
+    # Article (a/an)
+    elif "___" in question and ("apple" in q or "umbrella" in q):
+        steps.append("Use 'An' Before Vowel Sound")
+
+    # Default
     else:
         steps.append("Read Sentence Naturally")
-        steps.append("Choose What Sounds Correct")
+        steps.append("Pick What Sounds Right")
 
-    steps.append(f"Final Answer = {answer}")
+    steps.append(f"Final Answer Is {answer}")
     return build_levels(steps, answer)
-    
-def build_levels(steps, answer):
-    return {
-        "level1": " ➤ ".join(steps[:2]),
-        "level2": "\n".join([f"Step {i+1}: {s}" for i, s in enumerate(steps)]),
-        "level3": "\n".join(
-            ["🧠 Think Like This:"] +
-            [f"👉 {s}" for s in steps] +
-            [f"✅ Final Answer: {answer}"]
-        )
-    }
 
+    
 def default_explanation(question, answer):
     return {
         "level1": f"Logic → {answer}",
