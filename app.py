@@ -26,99 +26,138 @@ def solve_quant(question, answer):
     steps = []
     numbers = list(map(int, re.findall(r'\d+', question)))
 
-    if "%" in question and "of" in question and len(numbers) >= 2:
+    # Percentage
+    if "%" in question and "of" in question:
         percent, total = numbers[0], numbers[1]
-        result = (percent / 100) * total
-        steps.append(f"Convert {percent}% → {percent}/100")
-        steps.append(f"Multiply → ({percent}/100) × {total}")
+        result = (percent/100) * total
+        steps.append(f"{percent}% Means {percent}/100")
+        steps.append(f"Multiply {percent}/100 × {total}")
         steps.append(f"Result = {result}")
 
+    # Addition
     elif "+" in question:
+        steps.append(f"Numbers Found: {numbers}")
         result = sum(numbers)
-        steps.append(f"Add → {' + '.join(map(str, numbers))}")
-        steps.append(f"Result = {result}")
+        steps.append(f"Add Them → {result}")
 
+    # Multiplication
     elif "×" in question or "x" in question.lower():
         result = numbers[0] * numbers[1]
-        steps.append(f"Multiply → {numbers[0]} × {numbers[1]}")
-        steps.append(f"Result = {result}")
+        steps.append(f"Multiply {numbers[0]} × {numbers[1]} = {result}")
 
+    # Division
     elif "÷" in question or "divided" in question.lower():
         result = numbers[0] / numbers[1]
-        steps.append(f"Divide → {numbers[0]} ÷ {numbers[1]}")
-        steps.append(f"Result = {result}")
+        steps.append(f"Divide {numbers[0]} ÷ {numbers[1]} = {result}")
 
-    elif "half" in question.lower() and len(numbers) >= 1:
-        result = numbers[0] / 2
-        steps.append(f"Half Of {numbers[0]} → {numbers[0]}/2")
-        steps.append(f"Result = {result}")
+    # Square
+    elif "square" in question.lower():
+        n = numbers[0]
+        result = n*n
+        steps.append(f"Square Means Multiply Same Number")
+        steps.append(f"{n} × {n} = {result}")
 
-    elif "profit" in question.lower() and "%" in question.lower():
-        if len(numbers) >= 2:
-            profit = numbers[0]
-            cost = numbers[1]
-            percent = (profit / cost) * 100
-            steps.append(f"Profit % = (Profit / Cost) × 100")
-            steps.append(f"({profit}/{cost}) × 100 = {percent}%")
+    # Average
+    elif "average" in question.lower():
+        total = sum(numbers)
+        count = len(numbers)
+        result = total / count
+        steps.append(f"Sum = {total}")
+        steps.append(f"Divide By Count ({count})")
+        steps.append(f"Average = {result}")
 
-    elif "interest" in question.lower():
-        steps.append("Use Interest Formula")
+    # Ratio
+    elif "ratio" in question.lower():
+        steps.append("Use Ratio Concept")
         steps.append(f"Answer = {answer}")
 
+    # Default
     else:
-        steps.append("Understand Problem")
+        steps.append("Break The Problem Into Steps")
         steps.append(f"Answer = {answer}")
 
-    return build_levels(steps, answer)
-
+    return build_levels(steps, answer)   
+        
 def solve_logic(question, answer):
     steps = []
     nums = list(map(int, re.findall(r'\d+', question)))
 
     if len(nums) >= 3:
-        diff = nums[1] - nums[0]
 
         # Arithmetic Pattern
+        diff = nums[1] - nums[0]
         if all(nums[i+1] - nums[i] == diff for i in range(len(nums)-1)):
             steps.append(f"Pattern: +{diff}")
             steps.append(f"Next = {nums[-1]} + {diff}")
 
-        # Geometric Pattern (FIXED)
-        elif nums[1] != 0 and nums[0] != 0:
-            ratio1 = nums[1] / nums[0]
-            ratio2 = nums[2] / nums[1]
+        # Geometric Pattern
+        elif nums[0] != 0 and nums[1] % nums[0] == 0:
+            ratio = nums[1] // nums[0]
+            if all(nums[i+1] // nums[i] == ratio for i in range(len(nums)-1)):
+                steps.append(f"Pattern: ×{ratio}")
+                steps.append(f"Next = {nums[-1]} × {ratio}")
 
-            if ratio1 == ratio2:
-                steps.append(f"Pattern: ×{ratio1}")
-                steps.append(f"Next = {nums[-1]} × {ratio1}")
+        # Square Pattern
+        elif all(int(n**0.5)**2 == n for n in nums):
+            steps.append("Pattern: Square Numbers")
+            next_n = int((len(nums)+1)**2)
+            steps.append(f"Next = {next_n}")
 
+        # Difference Of Differences
         else:
-            steps.append("Complex Pattern")
+            diffs = [nums[i+1] - nums[i] for i in range(len(nums)-1)]
+            steps.append(f"Differences: {diffs}")
+            steps.append("Pattern Might Be Increasing Differences")
 
-    steps.append(f"Answer = {answer}")
-    return build_levels(steps, answer)
+    else:
+        steps.append("Identify Pattern Carefully")
+
+    steps.append(f"Final Answer = {answer}")
+    return build_levels(steps, answer)      
 
 def solve_verbal(question, answer):
     steps = []
 
+    # Fill In The Blanks
     if "___" in question:
-        steps.append("Check Subject")
-        steps.append("Match Verb")
+        if "he" in question.lower() or "she" in question.lower():
+            steps.append("Singular Subject → Use 'is'")
+        elif "they" in question.lower():
+            steps.append("Plural Subject → Use 'are'")
+        steps.append("Apply Grammar Rule")
 
+    # Synonym
     elif "synonym" in question.lower():
-        steps.append("Find Similar Meaning")
+        steps.append("Find Word With Same Meaning")
+        steps.append(f"{answer} Matches Meaning Closely")
 
+    # Antonym
     elif "antonym" in question.lower():
         steps.append("Find Opposite Meaning")
+        steps.append(f"{answer} Is Opposite Word")
 
-    steps.append(f"Answer = {answer}")
+    # Spelling
+    elif "spelling" in question.lower():
+        steps.append("Check Correct Letter Order")
+        steps.append(f"{answer} Is Correctly Spelled")
+
+    # Default Grammar
+    else:
+        steps.append("Read Sentence Naturally")
+        steps.append("Choose What Sounds Correct")
+
+    steps.append(f"Final Answer = {answer}")
     return build_levels(steps, answer)
-
+    
 def build_levels(steps, answer):
     return {
-        "level1": " | ".join(steps[:2]),
-        "level2": "\n".join(steps),
-        "level3": "\n".join(["👉 " + s for s in steps] + [f"Final Answer: {answer} ✅"])
+        "level1": " ➤ ".join(steps[:2]),
+        "level2": "\n".join([f"Step {i+1}: {s}" for i, s in enumerate(steps)]),
+        "level3": "\n".join(
+            ["🧠 Think Like This:"] +
+            [f"👉 {s}" for s in steps] +
+            [f"✅ Final Answer: {answer}"]
+        )
     }
 
 def default_explanation(question, answer):
