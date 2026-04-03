@@ -1,56 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/style.css">
+
+<style>
+.leaderboard-container {
+  width: 100%;
+  max-width: 600px;
+  margin: auto;
+}
+
+.leader-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  box-shadow: 0 0 10px rgba(0,255,255,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.leader-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(0,255,255,0.3);
+}
+
+.rank-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  width: 50px;
+}
+
+.top1 { color: gold; }
+.top2 { color: silver; }
+.top3 { color: #cd7f32; }
+
+.user-info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.user-info b {
+  font-size: 1.1rem;
+}
+
+.user-stats {
+  text-align: right;
+}
+
+.rank-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 15px;
+  background: #00ffff;
+  color: #000;
+  font-weight: bold;
+  margin-top: 3px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="container">
-
   <h1>🏆 Leaderboard</h1>
 
-  <table class="leaderboard-table">
-    <thead>
-      <tr>
-        <th>Rank</th>
-        <th>User</th>
-        <th>Score</th>
-        <th>Attempts</th>
-        <th>Accuracy</th>
-        <th>Tier</th>
-      </tr>
-    </thead>
+  <div class="leaderboard-container">
 
-    <tbody>
-      {% for user in data %}
-      <tr class="{% if loop.index == 1 %}top-1{% elif loop.index == 2 %}top-2{% elif loop.index == 3 %}top-3{% endif %}">
-        
-        <td>#{{ loop.index }}</td>
-        <td>{{ user[0] }}</td>
-        <td>{{ user[1] }}</td>
-        <td>{{ user[2] }}</td>
+    {% for user in data %}
+    <div class="leader-card">
 
-        <td>
-          {% if user[2] > 0 %}
-            {{ ((user[1] / user[2]) * 100) | round(2) }}%
-          {% else %}
-            0%
-          {% endif %}
-        </td>
+      <!-- Rank Number -->
+      <div class="rank-number 
+        {% if loop.index == 1 %}top1
+        {% elif loop.index == 2 %}top2
+        {% elif loop.index == 3 %}top3
+        {% endif %}
+      ">
+        #{{ loop.index }}
+      </div>
 
-        <td class="rank-badge">{{ user[3] }}</td>
+      <!-- User Info -->
+      <div class="user-info">
+        <b>{{ user[0] }}</b><br>
+        <span class="rank-badge">{{ user[3] }}</span>
+      </div>
 
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+      <!-- Stats -->
+      <div class="user-stats">
+        <p>⚡ {{ user[1] }} XP</p>
+        <p>📝 {{ user[2] }} Attempts</p>
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
 
   <br>
 
   <div class="center-buttons">
     <a href="/dashboard"><button>Dashboard</button></a>
-    <a href="/"><button>Logout</button></a>
+    <a href="/"><button>Home</button></a>
   </div>
 
 </div>
