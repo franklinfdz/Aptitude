@@ -49,37 +49,12 @@
 
 <!-- 🔥 Explanation Logic -->
 <script>
-  
-function showExplanation(level, id, explanations) {
-    const el = document.getElementById(id);
 
-    if (level === 1) {
-        el.innerHTML = `
-            <b>🧠 Level 1:</b> ${explanations.level1}
-            <br><br>
-            <button onclick="showExplanation(2, '${id}', window['exp_'+id])">
-                Explain More 🔍
-            </button>
-        `;
-        window['exp_'+id] = explanations;
-    }
-
-    else if (level === 2) {
-        el.innerHTML = `
-            <b>🧠 Level 2:</b><br>${explanations.level2.replace(/\n/g, "<br>")}
-            <br><br>
-            <button onclick="showExplanation(3, '${id}', window['exp_'+id])">
-                Explain Like Beginner 👶
-            </button>
-        `;
-    }
-
-    else if (level === 3) {
-        el.innerHTML = `
-            <b>🧠 Level 3:</b><br>${explanations.level3.replace(/\n/g, "<br>")}
-        `;
-    }
-}
+showExplanation(
+    1,
+    "exp{{ loop.index }}",
+    {{ w.exp | tojson }}
+  );
   
 </script>
 
