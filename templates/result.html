@@ -25,11 +25,8 @@
         <div id="exp{{ loop.index }}"></div>
 
         <script>
-          showExplanation(
-            1,
-            "exp{{ loop.index }}",
-            {{ w.exp | tojson }}
-          );
+          const expData{{ loop.index }} = {{ w.exp | tojson | safe }};
+          showExplanation(1, "exp{{ loop.index }}", expData{{ loop.index }});
         </script>
 
       </div>
@@ -55,11 +52,16 @@
 function showExplanation(level, id, explanations) {
     const el = document.getElementById(id);
 
+    if (!explanations) {
+        el.innerHTML = "<p>⚠️ Unable To Load Explanation</p>";
+        return;
+    }
+
     if (level === 1) {
         el.innerHTML = `
             <b>🧠 Level 1:</b> ${explanations.level1}
             <br><br>
-            <button onclick='showExplanation(2, "${id}", ${JSON.stringify(explanations)})'>
+            <button onclick='showExplanation(2, "${id}", window["expData${id.replace("exp","")}"])'>
                 Explain More 🔍
             </button>
         `;
@@ -69,7 +71,7 @@ function showExplanation(level, id, explanations) {
         el.innerHTML = `
             <b>🧠 Level 2:</b> ${explanations.level2}
             <br><br>
-            <button onclick='showExplanation(3, "${id}", ${JSON.stringify(explanations)})'>
+            <button onclick='showExplanation(3, "${id}", window["expData${id.replace("exp","")}"])'>
                 Explain Like Beginner 👶
             </button>
         `;
