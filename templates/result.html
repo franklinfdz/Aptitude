@@ -16,40 +16,75 @@
     {% else %}
       <h2>📚 Learn From Mistakes</h2>
 
-  <!-- TRY AGAIN -->
+      {% for w in wrong %}
+      <div class="wrong">
+        <p><b>{{ w.q }}</b></p>
+        <p>Correct: {{ w.correct }}</p>
 
-      <div class="center-buttons">
+        <!-- Explanation Container -->
+        <div id="exp{{ loop.index }}"></div>
+      </div>
+      {% endfor %}
+
+    {% endif %}
+  </div>
+
+  <!-- TRY AGAIN -->
+  <div class="center-buttons">
     <form action="/">
-      <button>Try Again</button>
+      <button type="submit">Try Again</button>
     </form>
   </div>
 
-    
+</div>
+
 <!-- BACKGROUND -->
 <div class="bg-shape shape1"></div>
 <div class="bg-shape shape2"></div>
 
 <!-- 🔥 Explanation Logic -->
 <script>
+function showExplanation(level, id, explanations) {
+    const el = document.getElementById(id);
+
+    if (level === 1) {
+        el.innerHTML = `
+            <b>🧠 Level 1:</b> ${explanations.level1}
+            <br><br>
+            <button onclick='showExplanation(2, "${id}", ${JSON.stringify(explanations)})'>
+                Explain More 🔍
+            </button>
+        `;
+    }
+
+    else if (level === 2) {
+        el.innerHTML = `
+            <b>🧠 Level 2:</b> ${explanations.level2}
+            <br><br>
+            <button onclick='showExplanation(3, "${id}", ${JSON.stringify(explanations)})'>
+                Explain Like Beginner 👶
+            </button>
+        `;
+    }
+
+    else if (level === 3) {
+        el.innerHTML = `
+            <b>🧠 Level 3:</b> ${explanations.level3}
+        `;
+    }
+}
+</script>
+
+<!-- 🔥 AUTO LOAD EXPLANATIONS -->
+<script>
 {% for w in wrong %}
-<div class="wrong">
-  <p><b>{{ w.q }}</b></p>
-  <p>Correct: {{ w.correct }}</p>
-
-  <!-- Explanation Container -->
-  <div id="exp{{ loop.index }}"></div>
-
     showExplanation(
-      1,
-      "exp{{ loop.index }}",
-      {{ w.exp | tojson | safe }}
+        1,
+        "exp{{ loop.index }}",
+        {{ w.exp | tojson | safe }}
     );
-  </script>
-    
-</div>
 {% endfor %}
-{% endif %}
-</div>
+</script>
 
 </body>
 </html>
