@@ -12,130 +12,290 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
 
 # =========================================================
+# 🧠 EXPLANATION AI ENGINE 
+# =========================================================
+
+def ai_explanation(question, correct):
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {os.environ.get('GROQ_API_KEY')}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "llama3-70b-8192",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Explain step by step: {question}. Correct answer is {correct}. Keep it simple."
+            }
+        ]
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    try:
+        return response.json()["choices"][0]["message"]["content"]
+    except:
+        return "AI Explanation Not Available"
+
+# =========================================================
 # 🧠 EXPLANATION ENGINE (AS GIVEN - NO CHANGE)
 # =========================================================
+
+
 def generate_explanation(q, user_answer=None):
+    import re
+
     question = q.get("q", "")
     correct = q.get("answer", "")
     qtype = q.get("type", "")
-    difficulty = q.get("difficulty", "easy")
+    subtype = q.get("subtype", "")
 
     def join_steps(steps):
         return "\n".join(steps)
 
+    nums = list(map(int, re.findall(r'\d+', question)))
+
+    # ================= WRONG FEEDBACK =================
     why_wrong = ""
     if user_answer and user_answer != correct:
         why_wrong = join_steps([
             f"Your Answer: {user_answer}",
             f"Correct Answer: {correct}",
             "",
-            "Why This Is Wrong:",
-            "You Likely Misread The Question Or Applied Incorrect Logic.",
-            "Recheck The Steps And Focus On The Correct Method."
+            "Mistake Insight:",
+            "You Either Miscalculated, Misread, Or Missed The Pattern.",
+            "Follow The Correct Steps Below Carefully."
         ])
 
-    concept = ""
-
+    # =====================================================
+    # 🧠 QUANT ENGINE
+    # =====================================================
     if qtype == "quant":
-        if "%" in question:
-            concept = "Percentage = (Part / Whole) × 100"
-        elif "average" in question.lower():
-            concept = "Average = Total Sum / Number Of Values"
-        elif "ratio" in question.lower():
-            concept = "Ratio = Comparison Of Two Quantities"
-        elif "speed" in question.lower():
-            concept = "Speed = Distance / Time"
-        elif "interest" in question.lower():
-            concept = "Interest Depends On Principal, Rate And Time"
-        else:
-            concept = "Basic Arithmetic Operations"
 
-        level1 = f"Answer = {correct}"
+        # 🔢 PERCENTAGE
+        if subtype == "percentage":
+            if len(nums) >= 2:
+                p, v = nums[0], nums[1]
+                result = (p/100)*v
+                return {
+                    "level1": correct,
+                    "level2": join_steps([
+                        f"{p}% Of {v}",
+                        f"= ({p}/100) × {v}",
+                        f"= {result}"
+                    ]),
+                    "level3": "Use Percentage Formula: (P/100 × Value)",
+                    "concept": "Percentage",
+                    "why_wrong": why_wrong
+                }
 
-        level2 = join_steps([
-            "Step 1: Understand The Question",
-            "Step 2: Identify Required Formula Or Operation",
-            "Step 3: Apply Values Carefully",
-            f"Final Answer = {correct}"
-        ])
+        # 💰 PROFIT LOSS
+        elif subtype == "profit_loss":
+            if len(nums) >= 2:
+                cp, sp = nums[0], nums[1]
+                profit = sp - cp
+                percent = (profit/cp)*100
+                return {
+                    "level1": correct,
+                    "level2": join_steps([
+                        f"Profit = SP - CP = {profit}",
+                        f"Profit% = ({profit}/{cp}) × 100 = {percent}%"
+                    ]),
+                    "level3": "Profit% = (Profit / CP) × 100",
+                    "concept": "Profit And Loss",
+                    "why_wrong": why_wrong
+                }
 
-        level3 = join_steps([
-            "Let’s Understand This Clearly:",
-            "",
-            "First, Identify What The Question Is Asking.",
-            "Then Select The Correct Formula Or Logic.",
-            "",
-            f"Apply The Steps Carefully To Reach {correct}.",
-            "",
-            "Always Double-Check Calculations To Avoid Mistakes."
-        ])
+        # ⚖️ RATIO
+        elif subtype == "ratio":
+            if len(nums) >= 3:
+                a, b, total = nums[0], nums[1], nums[2]
+                part = (a/(a+b))*total
+                return {
+                    "level1": correct,
+                    "level2": join_steps([
+                        f"Ratio = {a}:{b}",
+                        f"Total Parts = {a+b}",
+                        f"Smaller = ({a}/{a+b}) × {total} = {part}"
+                    ]),
+                    "level3": "Divide Total Based On Ratio",
+                    "concept": "Ratio Proportion",
+                    "why_wrong": why_wrong
+                }
 
+        # ⏱️ TIME WORK
+        elif subtype == "time_work":
+            return {
+                "level1": correct,
+                "level2": "Work = Rate × Time\nUse Reciprocal Method For Combined Work",
+                "level3": "Efficiency Adds Up → Faster Completion",
+                "concept": "Time And Work",
+                "why_wrong": why_wrong
+            }
+
+        # 🚗 SPEED
+        elif subtype == "speed":
+            if len(nums) >= 2:
+                d, t = nums[0], nums[1]
+                return {
+                    "level1": correct,
+                    "level2": f"Speed = {d}/{t} = {d/t}",
+                    "level3": "Speed = Distance ÷ Time",
+                    "concept": "Speed Distance Time",
+                    "why_wrong": why_wrong
+                }
+
+        # 💸 INTEREST
+        elif subtype == "interest":
+            if len(nums) >= 3:
+                p, r, t = nums[0], nums[1], nums[2]
+                si = (p*r*t)/100
+                return {
+                    "level1": correct,
+                    "level2": f"SI = ({p}×{r}×{t})/100 = {si}",
+                    "level3": "SI Formula",
+                    "concept": "Simple Interest",
+                    "why_wrong": why_wrong
+                }
+
+        # 🧮 LCM / HCF
+        elif subtype in ["lcm", "hcf"]:
+            return {
+                "level1": correct,
+                "level2": "Use Prime Factorization Method",
+                "level3": "LCM = Highest Powers, HCF = Lowest Powers",
+                "concept": "LCM And HCF",
+                "why_wrong": why_wrong
+            }
+
+        # 🔲 SQUARE / ROOT
+        elif subtype in ["square", "root"]:
+            return {
+                "level1": correct,
+                "level2": "Apply Square Or Square Root Logic",
+                "level3": "Memorization Helps Speed",
+                "concept": "Squares And Roots",
+                "why_wrong": why_wrong
+            }
+
+        # 🔁 MODULUS
+        elif subtype == "modulus":
+            return {
+                "level1": correct,
+                "level2": "Divide And Take Remainder",
+                "level3": "Focus On Remainder Pattern",
+                "concept": "Modulus Arithmetic",
+                "why_wrong": why_wrong
+            }
+
+        # 🎂 AGE
+        elif subtype == "age":
+            return {
+                "level1": correct,
+                "level2": "Form Equations Based On Age Relations",
+                "level3": "Solve Linear Equations",
+                "concept": "Age Problems",
+                "why_wrong": why_wrong
+            }
+
+    # =====================================================
+    # 🧠 LOGIC ENGINE
+    # =====================================================
     elif qtype == "logic":
 
-        concept = "Pattern Recognition And Logical Thinking"
+        # 🔢 SERIES
+        if subtype == "series":
+            if len(nums) >= 2:
+                diffs = [nums[i+1] - nums[i] for i in range(len(nums)-1)]
+                ratios = [nums[i+1]/nums[i] for i in range(len(nums)-1) if nums[i] != 0]
 
-        level1 = f"Answer = {correct}"
+                return {
+                    "level1": correct,
+                    "level2": join_steps([
+                        f"Numbers: {nums}",
+                        f"Differences: {diffs}",
+                        f"Ratios: {ratios}",
+                        "Check Pattern"
+                    ]),
+                    "level3": "Could Be +, ×, Alternating Or Mixed Pattern",
+                    "concept": "Series Pattern",
+                    "why_wrong": why_wrong
+                }
 
-        level2 = join_steps([
-            "Step 1: Observe Pattern Carefully",
-            "Step 2: Identify Rule (Increase / Multiply / Mix)",
-            "Step 3: Apply Pattern",
-            f"Final Answer = {correct}"
-        ])
+        # 🔤 ALPHABET
+        elif subtype == "alphabet":
+            return {
+                "level1": correct,
+                "level2": "Convert Letters To Positions (A=1, B=2...)",
+                "level3": "Apply Pattern",
+                "concept": "Alphabet Logic",
+                "why_wrong": why_wrong
+            }
 
-        level3 = join_steps([
-            "Let’s Break This Down:",
-            "",
-            "Every Logical Question Follows A Pattern.",
-            "Your Job Is To Find That Pattern Step By Step.",
-            "",
-            "Once You Understand The Rule,",
-            "Apply It Consistently To Get The Answer.",
-            "",
-            f"This Leads To {correct}."
-        ])
+        # 🔐 CODING
+        elif subtype == "coding":
+            return {
+                "level1": correct,
+                "level2": "Check Letter Values Or Pattern",
+                "level3": "Look For Hidden Rules",
+                "concept": "Coding Decoding",
+                "why_wrong": why_wrong
+            }
 
+        # ❌ ODD ONE
+        elif subtype == "odd_one":
+            return {
+                "level1": correct,
+                "level2": "Find Mismatch In Category",
+                "level3": "Compare Properties Carefully",
+                "concept": "Classification",
+                "why_wrong": why_wrong
+            }
+
+    # =====================================================
+    # 🧠 VERBAL ENGINE
+    # =====================================================
     elif qtype == "verbal":
 
-        concept = "Grammar, Vocabulary And Sentence Logic"
+        return {
+            "level1": correct,
+            "level2": "Use Grammar Or Vocabulary Knowledge",
+            "level3": f"Correct Option → {correct}",
+            "concept": "Language Rules",
+            "why_wrong": why_wrong
+        }
 
-        level1 = f"Answer = {correct}"
+    # =====================================================
+    # 📊 DATA INTERPRETATION (NEW)
+    # =====================================================
+    elif qtype == "di":
 
-        level2 = join_steps([
-            "Step 1: Read Carefully",
-            "Step 2: Understand Meaning Or Grammar Rule",
-            "Step 3: Eliminate Wrong Options",
-            f"Correct Answer = {correct}"
-        ])
+        return {
+            "level1": correct,
+            "level2": "Use Percentage / Profit / Ratio Logic",
+            "level3": "Carefully Read Data And Calculate",
+            "concept": "Data Interpretation",
+            "why_wrong": why_wrong
+        }
 
-        level3 = join_steps([
-            "Let’s Understand This:",
-            "",
-            "Language Questions Test Meaning And Structure.",
-            "You Must Understand Context Before Choosing.",
-            "",
-            "Eliminate Options That Don’t Fit.",
-            f"Correct Option Is {correct}."
-        ])
-
-    else:
-        concept = "General Problem Solving"
-        level1 = f"Answer = {correct}"
-        level2 = f"Apply Correct Logic → {correct}"
-        level3 = f"Break Down Problem Step By Step → {correct}"
-
+    # =====================================================
+    # ⚠️ FALLBACK
+    # =====================================================
     return {
-        "level1": level1,
-        "level2": level2,
-        "level3": level3,
-        "concept": concept,
+        "level1": correct,
+        "level2": "Apply Correct Logic",
+        "level3": "Break Step By Step",
+        "concept": "General",
         "why_wrong": why_wrong
-    }
+    }e
 
 # =========================================================
 # 📊 QUESTIONS (EMPTY - YOU ADD LATER)
 # =========================================================
-all_questions = all_questions = [
+all_questions = [
 
 # ================= EASY QUANT =================
 {"q":"What is 10% of 150?","options":["10","15","20","25"],"answer":"15","type":"quant","difficulty":"easy","subtype":"percentage"},
