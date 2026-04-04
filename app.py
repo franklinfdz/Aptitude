@@ -14,34 +14,382 @@ app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret")
 # =========================================================
 # 🧠 EXPLANATION ENGINE
 # =========================================================
-def generate_explanations(question, answer, qtype):
-    try:
-        qtype = (qtype or "").lower().strip()
-        q_lower = question.lower()
 
-        if qtype in ["quant", "di"]:
-            return solve_quant(question, answer)
 
-        elif qtype == "logic":
-            return solve_logic(question, answer)
+def generate_explanation(q):
+    subtype = q.get("subtype", "")
+    v = q.get("values", {})
+    answer = q.get("answer", "")
+    difficulty = q.get("difficulty", "easy")
 
-        elif qtype == "verbal":
-            return solve_verbal(question, answer)
+    def join_steps(steps):
+        return "\n".join(steps)
 
-        if any(sym in question for sym in ["%", "+", "-", "×", "÷"]):
-            return solve_quant(question, answer)
+    # =====================================================
+    # 🟢 EASY QUESTIONS
+    # =====================================================
+    if difficulty == "easy":
 
-        if re.search(r'\d+', question) and any(word in q_lower for word in ["series", "next", "missing"]):
-            return solve_logic(question, answer)
+        if subtype in ["addition", "subtraction", "multiplication", "division"]:
+            a = v.get("a")
+            b = v.get("b")
 
-        if any(word in q_lower for word in ["synonym", "antonym", "fill", "spelling"]):
-            return solve_verbal(question, answer)
+            symbol = {'addition':'+','subtraction':'-','multiplication':'×','division':'÷'}[subtype]
 
-        return default_explanation(question, answer)
+            level1 = f"{a} {symbol} {b} = {answer}"
 
-    except Exception as e:
-        print("EXPLANATION ERROR:", e)
-        return default_explanation(question, answer)
+            level2 = join_steps([
+                f"Step 1: Take The Numbers {a} And {b}",
+                f"Step 2: Apply {subtype.title()} Operation ({symbol})",
+                f"Step 3: Perform The Calculation Carefully",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                f"Let’s Understand This Clearly:",
+                f"{subtype.title()} Means Working With Numbers Step By Step.",
+                f"We Start With {a} And {b}.",
+                f"When We Apply ({symbol}), We Combine Or Adjust These Values.",
+                f"Carefully Performing The Operation Gives {answer}.",
+                f"",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype == "percentage":
+            p, n = v.get("percent"), v.get("number")
+
+            level1 = f"{p}% of {n} = {answer}"
+
+            level2 = join_steps([
+                f"Step 1: Convert {p}% Into Fraction → {p}/100",
+                f"Step 2: Multiply With {n}",
+                f"Step 3: ({p}/100) × {n}",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                f"Let’s Understand Percentage Clearly:",
+                f"{p}% Means {p} Out Of Every 100.",
+                f"So We Convert It Into Fraction Form → {p}/100.",
+                f"",
+                f"Now We Want {p}% Of {n},",
+                f"So We Multiply: ({p}/100) × {n}",
+                f"",
+                f"This Gives Us {answer}.",
+                f"",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype in ["arithmetic_series", "missing_series"]:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Observe The Numbers Carefully",
+                "Step 2: Identify The Pattern (Difference / Rule)",
+                "Step 3: Apply The Same Pattern Forward",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Break This Down:",
+                "In Number Series, Each Number Follows A Pattern.",
+                "We Check How One Number Changes To The Next.",
+                "",
+                "Once We Find That Rule,",
+                "We Apply The Same Rule To Continue The Series.",
+                "",
+                f"This Leads Us To {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype in ["synonym", "antonym", "grammar", "spelling", "fill_blank"]:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Read The Word Or Sentence Carefully",
+                "Step 2: Understand Meaning Or Grammar Usage",
+                "Step 3: Eliminate Wrong Options",
+                f"Correct Answer = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand This Properly:",
+                "Language Questions Test Meaning And Correct Usage.",
+                "",
+                "We First Understand The Word Or Sentence Context.",
+                "Then We Compare Options Based On Meaning Or Grammar Rules.",
+                "",
+                f"The Option That Fits Best Is {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype == "odd_one":
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Look At All Options",
+                "Step 2: Identify Common Pattern",
+                "Step 3: Find The One That Does Not Match",
+                f"Different One = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Think Step By Step:",
+                "Most Options Follow A Similar Pattern Or Category.",
+                "",
+                "We Compare Each Option Carefully.",
+                f"The One That Does Not Fit Is {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        else:
+            level1 = f"Answer = {answer}"
+            level2 = f"Basic Logic Applied → {answer}"
+            level3 = f"Step By Step Understanding Leads To → {answer}"
+
+    # =====================================================
+    # 🟡 MEDIUM QUESTIONS
+    # =====================================================
+    elif difficulty == "medium":
+
+        if subtype in ["percentage", "profit_loss"]:
+            level1 = f"Result = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Use Percentage Formula",
+                "Step 2: Substitute Given Values",
+                "Step 3: Perform Calculation Carefully",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand The Concept:",
+                "Percentage Represents A Portion Of Total.",
+                "",
+                "In Profit/Loss:",
+                "We Compare Cost Price And Selling Price.",
+                "",
+                "By Applying The Formula Step By Step,",
+                f"We Get The Result As {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype == "ratio":
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Understand Given Ratio",
+                "Step 2: Convert Ratio Into Parts",
+                "Step 3: Apply Total Or Condition",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand Ratio Clearly:",
+                "Ratio Shows Relationship Between Quantities.",
+                "",
+                "We Divide Total Based On Ratio Parts.",
+                "Then Calculate Each Part Step By Step.",
+                "",
+                f"This Gives The Answer {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype == "average":
+            nums = v.get("numbers", [])
+
+            level1 = f"Average = {answer}"
+
+            level2 = join_steps([
+                f"Step 1: Add All Numbers → {sum(nums)}",
+                f"Step 2: Count Numbers → {len(nums)}",
+                f"Step 3: Divide Sum By Count",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand Average:",
+                "Average Means Equal Distribution Of Values.",
+                "",
+                "First Add All Numbers Together.",
+                "Then Divide By Total Count.",
+                "",
+                f"This Gives The Average As {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype in ["geometric_series", "pattern"]:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Identify Pattern (× / + / Mixed)",
+                "Step 2: Verify Pattern Across Terms",
+                "Step 3: Apply Pattern Forward",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Break This Pattern:",
+                "Series Can Follow Multiplication Or Mixed Rules.",
+                "",
+                "We Carefully Observe Changes Between Numbers.",
+                "Once Pattern Is Confirmed, We Extend It.",
+                "",
+                f"This Leads To {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype in ["grammar", "fill_blank"]:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Read Full Sentence",
+                "Step 2: Identify Grammar Rule (Tense / Agreement)",
+                "Step 3: Match Correct Option",
+                f"Correct Answer = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand Grammar Logic:",
+                "Every Sentence Follows Structure And Rules.",
+                "",
+                "We Check Tense, Subject Agreement, And Meaning.",
+                "Then Choose The Word That Fits Perfectly.",
+                "",
+                f"This Gives {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        else:
+            level1 = f"Answer = {answer}"
+            level2 = f"Apply Method Step By Step → {answer}"
+            level3 = f"Conceptual Understanding Leads To → {answer}"
+
+    # =====================================================
+    # 🔴 HARD QUESTIONS
+    # =====================================================
+    else:
+
+        if subtype == "speed_distance":
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Use Formula → Speed = Distance / Time",
+                "Step 2: Substitute Values",
+                "Step 3: Solve Carefully",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand This Concept:",
+                "Speed, Distance, And Time Are Connected.",
+                "",
+                "Using The Formula, We Can Find Missing Value.",
+                "Substituting Correctly Gives Final Answer.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype == "time_work":
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Convert Work Into Rates",
+                "Step 2: Combine Efficiencies",
+                "Step 3: Calculate Total Time",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand Time And Work:",
+                "Each Person Completes A Part Of Work Per Time.",
+                "",
+                "We Convert Work Into Rate Form.",
+                "Then Combine Rates To Find Total Work Done.",
+                "",
+                f"This Gives The Answer {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype in ["simple_interest", "compound_interest"]:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Apply Interest Formula",
+                "Step 2: Substitute Principal, Rate, Time",
+                "Step 3: Calculate Carefully",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand Interest:",
+                "Interest Is Growth On Money Over Time.",
+                "",
+                "Simple Interest Uses Direct Formula.",
+                "Compound Interest Adds Growth On Previous Amount.",
+                "",
+                f"This Leads To {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        elif subtype in ["advanced_series", "mixed_pattern"]:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Identify Multiple Patterns",
+                "Step 2: Break Into Smaller Steps",
+                "Step 3: Apply Combined Logic",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Break This Down Carefully:",
+                "Complex Series Often Use More Than One Pattern.",
+                "",
+                "We Split The Pattern Into Smaller Parts.",
+                "Then Apply Each Step One By One.",
+                "",
+                f"This Gives Final Answer {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+        else:
+            level1 = f"Answer = {answer}"
+
+            level2 = join_steps([
+                "Step 1: Identify Concept",
+                "Step 2: Apply Formula Or Logic",
+                "Step 3: Solve Carefully",
+                f"Final Result = {answer}"
+            ])
+
+            level3 = join_steps([
+                "Let’s Understand The Full Concept:",
+                "Break The Problem Into Smaller Parts.",
+                "Apply The Correct Method Step By Step.",
+                "",
+                f"This Leads To The Final Answer {answer}.",
+                "",
+                f"Final Answer: {answer}"
+            ])
+
+    return {
+        "level1": level1,
+        "level2": level2,
+        "level3": level3
+    }
+
 
 # =========================================================
 # 🧩 LEVEL BUILDER
