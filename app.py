@@ -290,10 +290,48 @@ def submit():
 
 @app.route('/dashboard')
 def dashboard():
+
     if 'username' not in session:
         return redirect('/')
-    return render_template('dashboard.html')
 
+    username = session['username']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # USER DATA
+    cur.execute("""
+        SELECT total_score, total_attempts, xp
+        FROM users
+        WHERE username=%s
+    """, (username,))
+
+    user = cur.fetchone()
+
+    score = user[0] or 0
+    attempts = user[1] or 0
+    xp = user[2] or 0
+
+    accuracy = round((score / attempts) * 100, 2) if attempts > 0 else 0
+
+    # FAKE HISTORY (Optional Upgrade Later)
+    scores = [score]  # You Can Later Store History In DB
+    totals = [attempts]
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        'dashboard.html',
+        username=username,
+        xp=xp,
+        rank=get_rank(xp),
+        accuracy=accuracy,
+        attempts=attempts,
+        score=score,
+        scores=scores,
+        totals=totals
+    )
 
 @app.route('/leaderboard')
 def leaderboard():
@@ -302,7 +340,7 @@ def leaderboard():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT username, xp, total_score
+        SELECT username, xp, total_attempts
         FROM users
         ORDER BY xp DESC
         LIMIT 10
@@ -310,10 +348,16 @@ def leaderboard():
 
     users = cur.fetchall()
 
+    # ADD RANK LABEL
+    data = []
+    for u in users:
+        rank = get_rank(u[1])
+        data.append((u[0], u[1], u[2], rank))
+
     cur.close()
     conn.close()
 
-    return render_template('leaderboard.html', users=users)
+    return render_template('leaderboard.html', data=data)
 
 
 @app.route('/logout')
