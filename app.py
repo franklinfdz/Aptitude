@@ -3,7 +3,7 @@ import random
 import re
 import psycopg
 import requests
-
+from questions import all_questions
 from flask import Flask, render_template, request, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 
