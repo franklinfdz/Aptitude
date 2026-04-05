@@ -1,129 +1,127 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/style.css">
 
-  <style>
-    .result-header {
-      text-align: center;
-      margin-bottom: 25px;
-    }
+<style>
+.result-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
 
-    .score-box {
-      font-size: 2rem;
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: #00ffff;
-    }
+.score-box {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #00ffff;
+}
 
-    .performance-tag {
-      font-size: 1.2rem;
-      opacity: 0.8;
-    }
+.performance-tag {
+  font-size: 1.2rem;
+  opacity: 0.8;
+}
 
-    .reward-box {
-      margin-top: 15px;
-      padding: 15px;
-      border-radius: 10px;
-      background: rgba(0,255,255,0.08);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 20px rgba(0,255,255,0.2);
-      text-align: center;
-    }
+.reward-box {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgba(0,255,255,0.08);
+  box-shadow: 0 0 20px rgba(0,255,255,0.2);
+  text-align: center;
+}
 
-    .wrong {
-      margin-top: 20px;
-      padding: 15px;
-      border-radius: 8px;
-      background: rgba(255,0,0,0.08);
-    }
+.wrong {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  background: rgba(255,0,0,0.08);
+}
 
-    .explanation-container {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.4);
-    }
+.explanation-container {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.4);
+}
 
-    .exp-btn {
-      margin-top: 10px;
-      padding: 6px 10px;
-      font-size: 0.85rem;
-    }
-  </style>
+.exp-btn {
+  margin-top: 10px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+}
+</style>
 </head>
 
 <body>
 <div class="container">
 
-  <!-- 🔥 RESULT HEADER -->
-  <div class="result-header">
-    <div class="score-box">
-      Score: {{ score }} / {{ total }}
-    </div>
-
-    <div class="performance-tag">
-      {% if score == total %}
-        Exceptional Performance
-      {% elif score >= total * 0.7 %}
-        Strong Performance
-      {% elif score >= total * 0.4 %}
-        Moderate Performance
-      {% else %}
-        Needs Improvement
-      {% endif %}
-    </div>
+<!-- RESULT HEADER -->
+<div class="result-header">
+  <div class="score-box">
+    Score: {{ score }} / {{ total }}
   </div>
 
-  <!-- 🔥 XP / REWARD -->
-  <div class="reward-box">
-    <p>XP Gained: {{ xp_gained }}</p>
-    <p>Total XP: {{ total_xp }}</p>
-    <p>Rank: {{ rank }}</p>
-  </div>
-
-  <!-- 🔥 MISTAKES -->
-  <div id="resultContent">
-
-    {% if wrong|length == 0 %}
-      <h2 style="text-align:center; margin-top:20px;">
-        All Answers Correct. Maintain This Standard.
-      </h2>
+  <div class="performance-tag">
+    {% if score == total %}
+      Exceptional Performance
+    {% elif score >= total * 0.7 %}
+      Strong Performance
+    {% elif score >= total * 0.4 %}
+      Moderate Performance
     {% else %}
-      <h2 style="margin-top:20px;">Review Incorrect Responses</h2>
-
-      {% for w in wrong %}
-      <div class="wrong">
-        <p><b>{{ w.q }}</b></p>
-        <p>Correct Answer: {{ w.correct }}</p>
-
-        <div class="explanation-container" id="exp{{ loop.index }}"></div>
-      </div>
-      {% endfor %}
+      Needs Improvement
     {% endif %}
-
   </div>
+</div>
 
-  <!-- 🔥 ACTION BUTTONS -->
-  <div class="center-buttons" style="margin-top:25px;">
-    <form action="/quiz" method="post" style="display:inline;">
-      <button type="submit">Attempt Again</button>
-    </form>
+<!-- XP / REWARD -->
+<div class="reward-box">
+  <p>XP Gained: {{ xp_earned }}</p>
+  <p>Total XP: {{ new_xp }}</p>
+  <p>Rank: {{ rank }}</p>
 
-    <a href="/dashboard">
-      <button>View Dashboard</button>
-    </a>
+  {% if rank_up %}
+    <p style="color:#00ff99; font-weight:bold;">🚀 Rank Up Achieved</p>
+  {% endif %}
+</div>
+
+<!-- MISTAKES -->
+<div id="resultContent">
+
+{% if wrong|length == 0 %}
+  <h2 style="text-align:center; margin-top:20px;">
+    All Answers Correct. Maintain This Standard.
+  </h2>
+{% else %}
+  <h2 style="margin-top:20px;">Review Incorrect Responses</h2>
+
+  {% for w in wrong %}
+  <div class="wrong">
+    <p><b>{{ w.q }}</b></p>
+    <p>Correct Answer: {{ w.correct }}</p>
+
+    <div class="explanation-container" id="exp{{ loop.index }}"></div>
   </div>
-
-  <h2>XP Earned: {{ xp_earned }}</h2>
-<h3>Total XP: {{ new_xp }}</h3>
-<h3>Rank: {{ rank }}</h3>
-
-{% if rank_up %}
-  <h2>🚀 Rank Up Achieved</h2>
+  {% endfor %}
 {% endif %}
 
-<!-- 🔥 MOBILE NAVBAR -->
+</div>
+
+<!-- ACTION BUTTONS -->
+<div class="center-buttons" style="margin-top:25px;">
+
+  <!-- FIXED -->
+  <a href="/quiz">
+    <button>Attempt Again</button>
+  </a>
+
+  <a href="/dashboard">
+    <button>View Dashboard</button>
+  </a>
+
+</div>
+
+<!-- MOBILE NAV -->
 <div class="bottom-nav">
   <a href="/quiz">🧠</a>
   <a href="/dashboard">📊</a>
@@ -133,13 +131,7 @@
 
 </div>
 
-<!-- BACKGROUND -->
-<div class="bg-shape shape1"></div>
-<div class="bg-shape shape2"></div>
-<div class="cursor-glow"></div>
-<canvas id="particles"></canvas>
-
-<!-- 🔥 CLEAN EXPLANATION FLOW -->
+<!-- EXPLANATION SYSTEM -->
 <script>
 function showExplanation(level, id, explanations) {
     const el = document.getElementById(id);
@@ -166,69 +158,63 @@ function showExplanation(level, id, explanations) {
 
     else if (level === 3) {
         el.innerHTML = `
-            <b>Conceptual Understanding:</b><br>${explanations.level3}
+            <b>Concept:</b><br>${explanations.level3}
         `;
     }
 }
 </script>
 
-<!-- 🔥 AUTO LOAD EXPLANATIONS -->
 <script>
 {% for w in wrong %}
-    showExplanation(
-        1,
-        "exp{{ loop.index }}",
-        {{ w.exp | tojson | safe }}
-    );
+showExplanation(
+    1,
+    "exp{{ loop.index }}",
+    {{ w.exp | tojson | safe }}
+);
 {% endfor %}
 </script>
 
-<!-- BACKGROUND SYSTEM -->
+<!-- BACKGROUND -->
 <script>
-document.addEventListener("mousemove", (e) => {
-  const glow = document.querySelector(".cursor-glow");
-  glow.style.left = e.clientX + "px";
-  glow.style.top = e.clientY + "px";
-});
-
 const canvas = document.getElementById("particles");
-const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+if (canvas) {
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-let particles = [];
-for (let i = 0; i < 80; i++) {
-  particles.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    r: Math.random() * 3 + 1,
-    dx: (Math.random() - 0.5) * 0.5,
-    dy: (Math.random() - 0.5) * 0.5
-  });
+  let particles = [];
+  for (let i = 0; i < 60; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 3 + 1,
+      dx: (Math.random() - 0.5) * 0.5,
+      dy: (Math.random() - 0.5) * 0.5
+    });
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.dx;
+      p.y += p.dy;
+
+      if (p.x > canvas.width) p.x = 0;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.y > canvas.height) p.y = 0;
+      if (p.y < 0) p.y = canvas.height;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(0,255,255,0.5)";
+      ctx.fill();
+    });
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
 }
-
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  particles.forEach(p => {
-    p.x += p.dx;
-    p.y += p.dy;
-
-    if (p.x > canvas.width) p.x = 0;
-    if (p.x < 0) p.x = canvas.width;
-    if (p.y > canvas.height) p.y = 0;
-    if (p.y < 0) p.y = canvas.height;
-
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(0,255,255,0.5)";
-    ctx.fill();
-  });
-
-  requestAnimationFrame(animate);
-}
-
-animate();
 </script>
 
 </body>
