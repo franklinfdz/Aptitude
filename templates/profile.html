@@ -8,12 +8,37 @@
 
 <style>
 
-/* 🔥 Container Upgrade (Mobile + Desktop Safe) */
+/* 🔥 Container */
 .container {
     width: 90%;
     max-width: 500px;
     margin: 20px auto;
     padding: 20px;
+}
+
+/* 🔥 PROFILE HEADER */
+.profile-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #00ffff, #0072ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: auto;
+  box-shadow: 0 0 15px rgba(0,255,255,0.4);
+}
+
+.profile-name {
+  margin-top: 10px;
+  font-size: 1.2rem;
+  font-weight: bold;
 }
 
 /* 🔥 Sections */
@@ -25,7 +50,7 @@
   box-shadow: 0 0 10px rgba(0,255,255,0.1);
 }
 
-/* 🔥 XP Section */
+/* 🔥 XP */
 .xp-section {
   margin-top: 20px;
   text-align: center;
@@ -48,7 +73,7 @@
     box-shadow: 0 0 10px #00ffff;
 }
 
-/* 🔥 Rank Badge */
+/* 🔥 Rank */
 .rank-badge {
   display: inline-block;
   padding: 5px 12px;
@@ -58,7 +83,25 @@
   font-weight: bold;
 }
 
-/* 🔥 LEVEL UP POPUP */
+/* 🔥 BADGES */
+.badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.badge {
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: linear-gradient(45deg, #00ffff, #0072ff);
+  color: black;
+  font-size: 0.8rem;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0,255,255,0.3);
+}
+
+/* 🔥 LEVEL POPUP */
 .level-popup {
   position: fixed;
   top: 20%;
@@ -87,7 +130,7 @@ button {
     border-radius: 10px;
 }
 
-/* 🔥 Mobile Bottom Nav */
+/* 🔥 Bottom Nav */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -99,7 +142,6 @@ button {
   display: flex;
   justify-content: space-around;
   padding: 10px 0;
-  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
 .bottom-nav a {
@@ -108,7 +150,6 @@ button {
   text-decoration: none;
 }
 
-/* 🔥 Desktop Adjustment */
 @media (min-width: 768px) {
   .bottom-nav {
     display: none;
@@ -122,60 +163,78 @@ button {
 
 <div class="container">
 
-<h1>📊 Your Dashboard</h1>
-
-<!-- USER INFO -->
-<div class="stats-box">
-  <p><b>👤 User:</b> {{ username }}</p>
-  <p><b>🏆 Rank:</b> <span class="rank-badge">{{ rank }}</span></p>
-  <p><b>⚡ XP:</b> {{ xp }}</p>
-  <p><b>🎯 Accuracy:</b> {{ accuracy }}%</p>
+<!-- 🔥 PROFILE HEADER -->
+<div class="profile-header">
+  <div class="profile-avatar">
+    {{ username[0]|upper }}
+  </div>
+  <div class="profile-name">{{ username }}</div>
+  <div class="rank-badge">{{ rank }}</div>
 </div>
 
-<!-- XP PROGRESS -->
+<!-- 🔥 CORE STATS -->
+<div class="stats-box">
+  <p>⚡ XP: {{ xp }}</p>
+  <p>🎯 Accuracy: {{ accuracy }}%</p>
+</div>
+
+<!-- 🔥 XP PROGRESS -->
 <div class="xp-section">
   <p>Progress To Next Level</p>
   <div class="xp-bar">
     <div class="xp-fill" id="xpFill"></div>
   </div>
+  <p style="margin-top:10px;">
+    Next Rank At {{ ((xp//100)+1)*100 }} XP
+  </p>
 </div>
 
-<!-- LEVEL UP POPUP -->
+<!-- 🔥 BADGES -->
+<div class="stats-box">
+  <h3>🏅 Achievements</h3>
+
+  <div class="badge-grid">
+    {% for badge in badges %}
+      <div class="badge">{{ badge }}</div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 🔥 LEVEL UP POPUP -->
 <div id="levelUpPopup" class="level-popup">
   <h2>🚀 Level Up!</h2>
   <p id="newRankText"></p>
 </div>
 
-<!-- STATS -->
+<!-- 🔥 PERFORMANCE -->
 <div class="stats-box">
   <p>Total Attempts: {{ attempts }}</p>
   <p>Total Score: {{ score }}</p>
 </div>
 
-<!-- CHART -->
+<!-- 🔥 GRAPH -->
 <canvas id="chart"></canvas>
 
 <br>
 
 <div class="center-buttons">
-  <a href="/"><button>Back To Home</button></a>
+  <a href="/quiz"><button>Start Quiz</button></a>
   <a href="/leaderboard"><button>Leaderboard</button></a>
 </div>
 
 </div>
 
-<!-- MOBILE NAV -->
+<!-- 🔥 NAV -->
 <div class="bottom-nav">
   <a href="/quiz">🧠</a>
-  <a href="/dashboard">📊</a>
+  <a href="/dashboard">👤</a>
   <a href="/leaderboard">🏆</a>
   <a href="/logout">🚪</a>
 </div>
 
-<!-- CHART SCRIPT -->
+<!-- 🔥 CHART -->
 <script>
 const scores = {{ scores | tojson if scores else "[]" }};
-const totals = {{ totals | tojson if totals else "[]" }};
 
 if (scores.length > 0) {
   new Chart(document.getElementById('chart'), {
@@ -183,7 +242,7 @@ if (scores.length > 0) {
       data: {
           labels: scores.map((_, i) => "Attempt " + (i + 1)),
           datasets: [{
-              label: 'Scores',
+              label: 'Performance',
               data: scores,
               borderColor: 'cyan',
               tension: 0.3
@@ -194,7 +253,7 @@ if (scores.length > 0) {
 }
 </script>
 
-<!-- XP SYSTEM -->
+<!-- 🔥 XP SYSTEM -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -209,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 200);
   }
 
-  // LEVEL SYSTEM
   const lastXP = parseInt(localStorage.getItem("lastXP")) || 0;
 
   const lastLevel = Math.floor(lastXP / 100);
