@@ -365,7 +365,7 @@ def login():
     return render_template("login.html")
 
 
-@app.route('/quiz')
+@app.route('/quiz', methods=['GET', 'POST'])
 def quiz():
 
     if 'username' not in session:
@@ -434,6 +434,16 @@ def submit():
         new_xp=new_xp,
         rank=get_rank(new_xp)
     )
+
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+
+@app.route('/leaderboard')
+def leaderboard():
+    return render_template('leaderboard.html')
 
 
 @app.route('/logout')
