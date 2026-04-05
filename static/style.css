@@ -299,3 +299,35 @@ h1 {
   border: 1px solid rgba(0,255,255,0.3);
   font-size: 0.85rem;
 }
+
+/* 🔥 LEVEL UP POPUP */
+.level-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  background: #000;
+  padding: 25px;
+  border-radius: 15px;
+  text-align: center;
+  color: #00ffff;
+  box-shadow: 0 0 25px #00ffff;
+  opacity: 0;
+  z-index: 999;
+  transition: all 0.5s ease;
+}
+
+.level-popup.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* 🔥 XP GLOW EFFECT */
+.xp-fill {
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  from { box-shadow: 0 0 5px #00ffff; }
+  to { box-shadow: 0 0 20px #00ffff; }
+}
