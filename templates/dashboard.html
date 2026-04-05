@@ -1,19 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="/static/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-/* 🔥 Premium Sections */
+
+/* 🔥 Container Upgrade (Mobile + Desktop Safe) */
+.container {
+    width: 90%;
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+/* 🔥 Sections */
 .stats-box {
   margin: 15px 0;
   padding: 15px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: rgba(255,255,255,0.05);
   box-shadow: 0 0 10px rgba(0,255,255,0.1);
 }
 
+/* 🔥 XP Section */
 .xp-section {
   margin-top: 20px;
   text-align: center;
@@ -32,11 +44,11 @@
     background: linear-gradient(90deg, #00ffff, #00ff99);
     width: 0%;
     border-radius: 20px;
-
     transition: width 1s ease-in-out;
     box-shadow: 0 0 10px #00ffff;
 }
 
+/* 🔥 Rank Badge */
 .rank-badge {
   display: inline-block;
   padding: 5px 12px;
@@ -44,8 +56,65 @@
   background: #00ffff;
   color: #000;
   font-weight: bold;
-  margin-top: 5px;
 }
+
+/* 🔥 LEVEL UP POPUP */
+.level-popup {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.8);
+  background: #00ffff;
+  color: black;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  opacity: 0;
+  transition: all 0.4s ease;
+  z-index: 999;
+}
+
+.level-popup.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* 🔥 Buttons */
+button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+/* 🔥 Mobile Bottom Nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  max-width: 500px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: space-around;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.bottom-nav a {
+  color: white;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+/* 🔥 Desktop Adjustment */
+@media (min-width: 768px) {
+  .bottom-nav {
+    display: none;
+  }
+}
+
 </style>
 </head>
 
@@ -55,7 +124,7 @@
 
 <h1>📊 Your Dashboard</h1>
 
-<!-- 🔥 USER INFO -->
+<!-- USER INFO -->
 <div class="stats-box">
   <p><b>👤 User:</b> {{ username }}</p>
   <p><b>🏆 Rank:</b> <span class="rank-badge">{{ rank }}</span></p>
@@ -63,7 +132,7 @@
   <p><b>🎯 Accuracy:</b> {{ accuracy }}%</p>
 </div>
 
-<!-- 🔥 XP PROGRESS -->
+<!-- XP PROGRESS -->
 <div class="xp-section">
   <p>Progress To Next Level</p>
   <div class="xp-bar">
@@ -71,19 +140,19 @@
   </div>
 </div>
 
-<!-- 🔥 LEVEL UP POPUP -->
+<!-- LEVEL UP POPUP -->
 <div id="levelUpPopup" class="level-popup">
   <h2>🚀 Level Up!</h2>
   <p id="newRankText"></p>
 </div>
-  
-<!-- 🔥 STATS -->
+
+<!-- STATS -->
 <div class="stats-box">
   <p>Total Attempts: {{ attempts }}</p>
   <p>Total Score: {{ score }}</p>
 </div>
 
-<!-- 🔥 CHART -->
+<!-- CHART -->
 <canvas id="chart"></canvas>
 
 <br>
@@ -93,7 +162,9 @@
   <a href="/leaderboard"><button>Leaderboard</button></a>
 </div>
 
-<!-- 🔥 MOBILE NAVBAR -->
+</div>
+
+<!-- MOBILE NAV -->
 <div class="bottom-nav">
   <a href="/quiz">🧠</a>
   <a href="/dashboard">📊</a>
@@ -101,45 +172,29 @@
   <a href="/logout">🚪</a>
 </div>
 
-</div>
-
-<!-- 🔥 CHART SCRIPT -->
+<!-- CHART SCRIPT -->
 <script>
 const scores = {{ scores | tojson if scores else "[]" }};
 const totals = {{ totals | tojson if totals else "[]" }};
 
-const ctx = document.getElementById('chart').getContext('2d');
-
 if (scores.length > 0) {
-  new Chart(ctx, {
+  new Chart(document.getElementById('chart'), {
       type: 'line',
       data: {
           labels: scores.map((_, i) => "Attempt " + (i + 1)),
           datasets: [{
               label: 'Scores',
               data: scores,
-              fill: false,
-              borderColor: 'rgba(0, 255, 255, 1)',
+              borderColor: 'cyan',
               tension: 0.3
           }]
       },
-      options: {
-          responsive: true,
-          plugins: {
-              legend: { position: 'top' }
-          },
-          scales: {
-              y: {
-                  beginAtZero: true,
-                  suggestedMax: Math.max(...totals, 10)
-              }
-          }
-      }
+      options: { responsive: true }
   });
 }
 </script>
 
-<!-- 🔥 XP ANIMATION -->
+<!-- XP SYSTEM -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -149,48 +204,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const fill = document.getElementById("xpFill");
 
   if (fill) {
-    fill.style.width = "0%";
     setTimeout(() => {
       fill.style.width = progress + "%";
     }, 200);
   }
 
-  // 🔥 LEVEL-UP DETECTION (FIXED)
+  // LEVEL SYSTEM
   const lastXP = parseInt(localStorage.getItem("lastXP")) || 0;
 
   const lastLevel = Math.floor(lastXP / 100);
   const currentLevel = Math.floor(xp / 100);
 
   if (currentLevel > lastLevel) {
-
     const popup = document.getElementById("levelUpPopup");
     const rankText = document.getElementById("newRankText");
 
-    if (popup && rankText) {
-      rankText.innerText = "New Rank: {{ rank }}";
+    rankText.innerText = "New Rank: {{ rank }}";
 
-      popup.classList.add("show");
+    popup.classList.add("show");
 
-      setTimeout(() => {
-        popup.classList.remove("show");
-      }, 2500);
-    }
+    setTimeout(() => {
+      popup.classList.remove("show");
+    }, 2500);
   }
 
   localStorage.setItem("lastXP", xp);
 
 });
 </script>
-  
-{% if data|length == 0 %}
-<p style="text-align:center;">No Players Yet</p>
-{% endif %}
-
-<!-- BACKGROUND SYSTEM -->
-<div class="bg-shape shape1"></div>
-<div class="bg-shape shape2"></div>
-<div class="cursor-glow"></div>
-<canvas id="particles"></canvas>
 
 </body>
 </html>
