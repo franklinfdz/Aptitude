@@ -1,245 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aptitude Platform</title>
-  <link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aptitude Platform</title>
 
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a0a0a;
-      overflow-x: hidden;
-      color: #fff;
-    }
+<link rel="stylesheet" href="/static/style.css">
 
-    .main-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      z-index: 10;
-      width: 100%;
-      max-width: 400px;
-      padding: 30px;
-      backdrop-filter: blur(12px);
-      background: rgba(255,255,255,0.04);
-      border-radius: 15px;
-      box-shadow: 0 0 40px rgba(0,255,255,0.08);
-      animation: fadeIn 0.6s ease;
-    }
+<style>
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translate(-50%, -40%); }
-      to { opacity: 1; transform: translate(-50%, -50%); }
-    }
+/* 🔥 BASE */
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Poppins', sans-serif;
+  background: #0a0a0a;
+  overflow-x: hidden;
+  color: #fff;
+}
 
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 8px;
-      letter-spacing: 1px;
-    }
+/* 🔥 CONTAINER */
+.main-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  box-shadow: 0 0 40px rgba(0,255,255,0.1);
+  animation: fadeIn 0.6s ease;
+}
 
-    .subtitle {
-      font-size: 0.85rem;
-      color: #aaa;
-      margin-bottom: 20px;
-    }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -40%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
 
-    .home-img {
-      width: 80px;
-      margin-bottom: 18px;
-      border-radius: 12px;
-      opacity: 0.9;
-    }
+/* 🔥 HEADINGS */
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 5px;
+}
 
-    input[type="text"], input[type="password"] {
-      padding: 12px;
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.08);
-      margin-bottom: 15px;
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      outline: none;
-      transition: 0.25s;
-      font-size: 0.95rem;
-    }
+.subtitle {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-bottom: 20px;
+}
 
-    input:focus {
-      border-color: #00ffff;
-      box-shadow: 0 0 10px rgba(0,255,255,0.3);
-    }
+/* 🔥 IMAGE */
+.home-img {
+  width: 75px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+}
 
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 5px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #00ffff, #0099ff);
-      color: #000;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      font-size: 0.95rem;
-    }
+/* 🔥 FLOATING INPUT */
+.input-group {
+  position: relative;
+  margin-bottom: 18px;
+}
 
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0,255,255,0.2);
-      color: #fff;
-    }
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+  outline: none;
+  font-size: 0.9rem;
+}
 
-    .error {
-      color: #ff4d4d;
-      font-size: 0.85rem;
-      margin-bottom: 10px;
-    }
+.input-group label {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  font-size: 0.85rem;
+  color: #aaa;
+  pointer-events: none;
+  transition: 0.2s ease;
+  background: transparent;
+}
 
-    /* 🔥 Background Effects */
-    .bg-shape {
-      position: absolute;
-      width: 280px;
-      height: 280px;
-      border-radius: 50%;
-      filter: blur(100px);
-      z-index: 1;
-    }
+/* FLOAT EFFECT */
+.input-group input:focus + label,
+.input-group input:not(:placeholder-shown) + label {
+  top: -8px;
+  left: 8px;
+  font-size: 0.7rem;
+  color: #00ffff;
+  background: #0a0a0a;
+  padding: 0 5px;
+}
 
-    .shape1 {
-      background: rgba(0, 255, 255, 0.2);
-      top: -100px;
-      left: -100px;
-    }
+.input-group input:focus {
+  border-color: #00ffff;
+  box-shadow: 0 0 10px rgba(0,255,255,0.3);
+}
 
-    .shape2 {
-      background: rgba(255, 0, 255, 0.2);
-      bottom: -100px;
-      right: -100px;
-    }
+/* 🔥 PASSWORD TOGGLE */
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 12px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
 
-    .cursor-glow {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      pointer-events: none;
-      background: rgba(0, 255, 255, 0.5);
-      filter: blur(8px);
-      z-index: 20;
-      transform: translate(-50%, -50%);
-    }
+/* 🔥 BUTTON */
+button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #00ffff, #0099ff);
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
 
-    canvas#particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 0;
-    }
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,255,255,0.3);
+  color: #fff;
+}
 
-    @media (max-width: 500px) {
-      .main-container {
-        width: 92%;
-        padding: 20px;
-      }
-    }
-  </style>
+/* 🔥 LOADING STATE */
+button.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* 🔥 ERROR */
+.error {
+  color: #ff4d4d;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+/* 🔥 BACKGROUND */
+.bg-shape {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+
+.shape1 {
+  background: rgba(0,255,255,0.2);
+  top: -100px;
+  left: -100px;
+}
+
+.shape2 {
+  background: rgba(255,0,255,0.2);
+  bottom: -100px;
+  right: -100px;
+}
+
+.cursor-glow {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: rgba(0,255,255,0.5);
+  filter: blur(8px);
+  transform: translate(-50%, -50%);
+}
+
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+/* 🔥 MOBILE */
+@media (max-width: 500px) {
+  .main-container {
+    width: 92%;
+    padding: 20px;
+  }
+}
+
+</style>
 </head>
 
 <body>
 
-  <!-- 🔥 BACKGROUND -->
-  <div class="bg-shape shape1"></div>
-  <div class="bg-shape shape2"></div>
-  <div class="cursor-glow"></div>
-  <canvas id="particles"></canvas>
+<div class="bg-shape shape1"></div>
+<div class="bg-shape shape2"></div>
+<div class="cursor-glow"></div>
+<canvas id="particles"></canvas>
 
-  <!-- 🔥 LOGIN BOX -->
-  <div class="main-container">
+<div class="main-container">
 
-    <h1>Aptitude Platform</h1>
-    <div class="subtitle">Structured Learning • Measurable Growth</div>
+<h1>Aptitude Platform</h1>
+<div class="subtitle">Structured Learning • Measurable Growth</div>
 
-    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm0AmfJ8QENqp9dbUYb2vuWT9pBygXkMdkdq90lEAREoriXGmHEvCtJ0L8&s=10" 
-         alt="Aptitude" class="home-img">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm0AmfJ8QENqp9dbUYb2vuWT9pBygXkMdkdq90lEAREoriXGmHEvCtJ0L8&s=10" class="home-img">
 
-    {% if error %}
-      <div class="error">{{ error }}</div>
-    {% endif %}
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
 
-    <!-- 🔥 FORM -->
-    <form method="post">
-      <input type="text" name="username" placeholder="Username" required autocomplete="off">
-      <input type="password" name="password" placeholder="Password" required>
-      <button type="submit">Continue</button>
-    </form>
+<form method="post" onsubmit="handleLogin(event)">
 
+  <div class="input-group">
+    <input type="text" name="username" required placeholder=" ">
+    <label>Username</label>
   </div>
 
-  <!-- 🔥 SCRIPTS -->
-  <script>
-    // Cursor Glow
-    document.addEventListener("mousemove", (e) => {
-      const glow = document.querySelector(".cursor-glow");
-      if (glow) {
-        glow.style.left = e.clientX + "px";
-        glow.style.top = e.clientY + "px";
-      }
-    });
+  <div class="input-group">
+    <input type="password" id="password" name="password" required placeholder=" ">
+    <label>Password</label>
+    <span class="password-toggle" onclick="togglePassword()">👁</span>
+  </div>
 
-    // Particles
-    const canvas = document.getElementById("particles");
-    const ctx = canvas.getContext("2d");
+  <button id="loginBtn" type="submit">Continue</button>
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
+</form>
 
-    let particles = [];
-    for (let i = 0; i < 60; i++) {
-      particles.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        r: Math.random() * 2 + 1,
-        dx: (Math.random() - 0.5) * 0.4,
-        dy: (Math.random() - 0.5) * 0.4
-      });
-    }
+</div>
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+<script>
 
-      particles.forEach(p => {
-        p.x += p.dx;
-        p.y += p.dy;
+/* 🔥 PASSWORD TOGGLE */
+function togglePassword() {
+  const input = document.getElementById("password");
+  input.type = input.type === "password" ? "text" : "password";
+}
 
-        if (p.x > canvas.width) p.x = 0;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.y > canvas.height) p.y = 0;
-        if (p.y < 0) p.y = canvas.height;
+/* 🔥 BUTTON LOADING */
+function handleLogin(e) {
+  const btn = document.getElementById("loginBtn");
+  btn.classList.add("loading");
+  btn.innerText = "Entering...";
+}
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-        ctx.fillStyle = "rgba(0,255,255,0.4)";
-        ctx.fill();
-      });
+/* 🔥 CURSOR */
+document.addEventListener("mousemove", (e) => {
+  const glow = document.querySelector(".cursor-glow");
+  if (glow) {
+    glow.style.left = e.clientX + "px";
+    glow.style.top = e.clientY + "px";
+  }
+});
 
-      requestAnimationFrame(animate);
-    }
+/* 🔥 PARTICLES */
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
 
-    animate();
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
 
-    window.addEventListener('resize', resizeCanvas);
-  </script>
+let particles = [];
+for (let i = 0; i < 50; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 2 + 1,
+    dx: (Math.random() - 0.5) * 0.4,
+    dy: (Math.random() - 0.5) * 0.4
+  });
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  particles.forEach(p => {
+    p.x += p.dx;
+    p.y += p.dy;
+
+    if (p.x > canvas.width) p.x = 0;
+    if (p.x < 0) p.x = canvas.width;
+    if (p.y > canvas.height) p.y = 0;
+    if (p.y < 0) p.y = canvas.height;
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = "rgba(0,255,255,0.4)";
+    ctx.fill();
+  });
+
+  requestAnimationFrame(animate);
+}
+
+animate();
+window.addEventListener("resize", resize);
+
+</script>
 
 </body>
 </html>
