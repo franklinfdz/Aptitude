@@ -357,4 +357,8 @@ h1 {
   transform: scale(1.02);
   transition: 0.2s;
 }
-e
+* {
+  box-sizing: border-box;
+}
+
+
