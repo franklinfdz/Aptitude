@@ -448,11 +448,19 @@ def submit():
     conn = get_db_connection()
     cur = conn.cursor()
 
+    # 🔥 GET CURRENT XP
     cur.execute("SELECT xp FROM users WHERE username=%s", (username,))
     current_xp = cur.fetchone()[0]
 
+    # 🔥 CALCULATE NEW XP
     new_xp = current_xp + xp_earned
 
+    # 🔥 ✅ ADD THIS BLOCK RIGHT HERE
+    old_rank = get_rank(current_xp)
+    new_rank = get_rank(new_xp)
+    level_up = old_rank != new_rank
+
+    # 🔥 UPDATE DB
     cur.execute("""
         UPDATE users
         SET total_score = total_score + %s,
@@ -465,6 +473,7 @@ def submit():
     cur.close()
     conn.close()
 
+    # 🔥 PASS level_up + new_rank
     return render_template(
         "result.html",
         score=score,
@@ -472,7 +481,8 @@ def submit():
         wrong=wrong,
         xp_earned=xp_earned,
         new_xp=new_xp,
-        rank=get_rank(new_xp)
+        rank=new_rank,
+        level_up=level_up   # ✅ IMPORTANT
     )
 
 
