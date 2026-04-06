@@ -1,3 +1,6 @@
+// ======================================================
+// 🔥 TIMER
+// ======================================================
 let t = 90;
 
 let interval = setInterval(() => {
@@ -20,39 +23,97 @@ let interval = setInterval(() => {
 }, 1000);
 
 
-// 🔥 Smart Explanation Viewer
+// ======================================================
+// 🔥 EXPLANATION SYSTEM (FIXED + UPGRADED)
+// ======================================================
 function showExplanation(level, id, explanations) {
     const el = document.getElementById(id);
 
+    // Store Explanation Globally
     if (!window.expStore) {
         window.expStore = {};
     }
     window.expStore[id] = explanations;
 
-    if (level === 1) {
+    // Initialize Structure Once
+    if (!el.dataset.initialized) {
         el.innerHTML = `
+            <div id="${id}-content"></div>
+            <div id="${id}-buttons"></div>
+        `;
+        el.dataset.initialized = "true";
+    }
+
+    const content = document.getElementById(`${id}-content`);
+    const buttons = document.getElementById(`${id}-buttons`);
+
+    // ================= LEVEL 1 =================
+    if (level === 1) {
+        content.innerHTML = `
             <b>🧠 Level 1:</b> ${explanations.level1}
-            <br><br>
+        `;
+
+        buttons.innerHTML = `
+            <br>
             <button onclick="showExplanation(2, '${id}', window.expStore['${id}'])">
                 Explain More 🔍
             </button>
         `;
     }
 
+    // ================= LEVEL 2 =================
     else if (level === 2) {
-        el.innerHTML = `
-            <b>🧠 Level 2:</b><br>${explanations.level2.replace(/\n/g, "<br>")}
+        content.innerHTML += `
             <br><br>
+            <b>🧠 Level 2:</b><br>
+            ${explanations.level2.replace(/\n/g, "<br>")}
+        `;
+
+        buttons.innerHTML = `
+            <br>
             <button onclick="showExplanation(3, '${id}', window.expStore['${id}'])">
-                Explain Thoroughly
+                Explain Thoroughly 📘
             </button>
         `;
     }
 
+    // ================= LEVEL 3 =================
     else if (level === 3) {
-        el.innerHTML = `
-            <b>🧠 Level 3:</b><br>${explanations.level3.replace(/\n/g, "<br>")}
+        content.innerHTML += `
+            <br><br>
+            <b>🧠 Level 3:</b><br>
+            ${explanations.level3.replace(/\n/g, "<br>")}
+        `;
+
+        buttons.innerHTML = `
+            <br>
+            <button onclick="showAI('${id}')">
+                🤖 AI Explain
+            </button>
         `;
     }
 }
 
+
+// ======================================================
+// 🤖 AI EXPLANATION (FINAL LEVEL)
+// ======================================================
+function showAI(id) {
+    const exp = window.expStore[id];
+    const content = document.getElementById(`${id}-content`);
+    const buttons = document.getElementById(`${id}-buttons`);
+
+    // Prevent Duplicate AI Injection
+    if (content.dataset.aiShown) return;
+
+    content.innerHTML += `
+        <br><br>
+        <b>🤖 AI Explanation:</b><br>
+        ${exp.level4 ? exp.level4.replace(/\n/g, "<br>") : "No AI Explanation Available"}
+    `;
+
+    content.dataset.aiShown = "true";
+
+    // Remove Button After Use
+    buttons.innerHTML = "";
+}
