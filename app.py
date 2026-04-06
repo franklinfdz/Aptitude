@@ -4,7 +4,7 @@ import re
 import psycopg
 import requests
 from questions import all_questions
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # =========================================================
@@ -21,7 +21,29 @@ def ai_explanation(question, correct):
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        return "AI Not Configured"
+        return "AI Not Configured Properly"
+
+    q_lower = question.lower()
+
+    # 🔍 Smarter Category Detection
+    if "%" in question or "percent" in q_lower:
+        category = "Percentage"
+    elif "average" in q_lower or "mean" in q_lower:
+        category = "Average"
+    elif "ratio" in q_lower:
+        category = "Ratio"
+    elif any(x in q_lower for x in ["speed", "distance", "time"]):
+        category = "Speed/Time/Distance"
+    elif "interest" in q_lower:
+        category = "Interest"
+    elif any(x in q_lower for x in ["profit", "loss"]):
+        category = "Profit/Loss"
+    elif "work" in q_lower:
+        category = "Time & Work"
+    elif any(x in q_lower for x in ["series", "pattern"]):
+        category = "Series/Pattern"
+    else:
+        category = "General Aptitude"
 
     try:
         res = requests.post(
@@ -32,24 +54,51 @@ def ai_explanation(question, correct):
             },
             json={
                 "model": "llama3-8b-8192",
+                "temperature": 0.3,  # 🔥 Makes It More Accurate
                 "messages": [
                     {
+                        "role": "system",
+                        "content": f"""
+You Are A Highly Skilled Aptitude Teacher.
+
+Category: {category}
+
+You MUST Follow This Format:
+
+1. Step-By-Step Solution (With Numbers Clearly Shown)
+2. Formula Used
+3. Explanation In Simple Words
+4. Shortcut Or Trick (If Possible)
+
+Important Rules:
+- Do NOT Guess Missing Values
+- Use Only Given Data
+- Be Logical And Clear
+- Avoid Fluff
+"""
+                    },
+                    {
                         "role": "user",
-                        "content": f"Explain This Step By Step:\n{question}\nAnswer: {correct}"
+                        "content": f"""
+Question:
+{question}
+
+Correct Answer:
+{correct}
+"""
                     }
                 ]
             },
-            timeout=6
+            timeout=10
         )
 
         if res.status_code == 200:
             return res.json()["choices"][0]["message"]["content"]
 
-        return "AI Failed"
+        return "AI Failed To Generate Explanation"
 
     except Exception:
-        return "AI Timeout"
-
+        return "AI Timeout Or Network Issue"
 
 # =========================================================
 # 🧠 EXPLANATION ENGINE
@@ -236,14 +285,6 @@ def generate_explanation(q, user_answer=None):
     exp["level2"] = "Break The Question Into Parts And Apply Basic Concepts Step By Step."
     exp["level3"] = "Think Calmly. Every Problem Has A Pattern Or Rule."
     return exp
-
-    return {
-        "level1": level1,
-        "level2": level2,
-        "level3": level3,
-        "level4": f"AI Explanation Placeholder For Button → Detailed Stepwise Explanation For Question: {question}",
-        "why_wrong": why_wrong
-    }
 
 
 # =========================================================
@@ -504,7 +545,25 @@ def leaderboard():
     cur.close()
     conn.close()
 
-    return render_template("result.html", data=data)
+    return render_template("leaderboard.html", data=data)
+
+
+@app.route("/ai_explain", methods=["POST"])
+def ai_explain():
+
+    data = request.get_json()
+
+    question = data.get("question", "")
+    answer = data.get("answer", "")
+
+    if not question:
+        return jsonify({"explanation": "Invalid Question Data"})
+
+    explanation = ai_explanation(question, answer)
+
+    return jsonify({
+        "explanation": explanation
+    })
 
 @app.route('/logout')
 def logout():
